@@ -13,12 +13,14 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/hospital_s
 app.use(helmet());
 app.use(cors({
     origin: (origin, callback) => {
+        const envAllowed = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
         const allowed = [
             'http://localhost:3000', 'http://localhost:3001',
             'http://hospital-portal:80', 'http://admin-dashboard:80',
-            // 🔐 PRODUCTION: Replace with your actual domains, e.g. 'https://yourdomain.com'
+            'https://hospital-portal-beta.vercel.app',
+            'https://hospital-empanelment.vercel.app',
+            ...envAllowed
         ];
-        // Allow requests with no origin (same-origin / server-to-server) only in dev
         if (!origin || allowed.includes(origin)) return callback(null, true);
         return callback(new Error('Not allowed by CORS'));
     },
