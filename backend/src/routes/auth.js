@@ -10,12 +10,17 @@ router.post('/login', async (req, res) => {
         if (!username || !password) {
             return res.status(400).json({ error: 'Username and password required' });
         }
-        const admin = await Admin.findOne({ username });
+
+        const cleanUsername = username.toLowerCase().trim();
+        const admin = await Admin.findOne({ username: cleanUsername });
+
         if (!admin) {
+            console.error(`❌ Admin Login Failed: User "${cleanUsername}" not found in database.`);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         const isMatch = await admin.comparePassword(password);
         if (!isMatch) {
+            console.error(`❌ Admin Login Failed: Password mismatch for user "${cleanUsername}".`);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
         const token = jwt.sign(

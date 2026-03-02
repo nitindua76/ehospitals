@@ -62,6 +62,8 @@ app.get('/api/reset-admin', async (req, res) => {
         const username = process.env.ADMIN_USERNAME || 'admin';
         const password = process.env.ADMIN_PASSWORD || 'Admin@123';
 
+        console.log(`⚙️ Running Reset: Setting Admin "${username}" with password "${password.substring(0, 2)}***"`);
+
         let admin = await Admin.findOne({ username });
         if (admin) {
             admin.password = password;
