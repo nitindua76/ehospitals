@@ -1,0 +1,60 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: hospital_mongodb
+    restart: unless-stopped
+    # Port 27017 intentionally NOT exposed — only accessible within Docker network
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - hospital_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: hospital_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      - mongodb
+    networks:
+      - hospital_network
+    command: sh -c "node src/seed.js && node src/index.js"
+
+  hospital-portal:
+    build:
+      context: ./hospital-portal
+      dockerfile: Dockerfile
+    container_name: hospital_portal
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - hospital_network
+
+  admin-dashboard:
+    build:
+      context: ./admin-dashboard
+      dockerfile: Dockerfile
+    container_name: hospital_admin
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - hospital_network
+
+volumes:
+  mongo_data:
+
+
+networks:
+  hospital_network:
+    driver: bridge

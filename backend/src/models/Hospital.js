@@ -1,0 +1,258 @@
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+
+const hospitalSchema = new mongoose.Schema({
+  // CREDENTIALS (stored securely, only accessible to admin)
+  username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  password: { type: String, required: true }, // bcrypt-hashed
+
+  // SECTION A: BASIC DETAILS
+  name: { type: String, required: true, trim: true },
+  brand_name: { type: String, trim: true },
+  pan_number: { type: String, trim: true },
+  pan_attached: { type: Boolean, default: false },
+  gst_number: { type: String, trim: true },
+  gst_attached: { type: Boolean, default: false },
+  msme_status: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  msme_type: { type: String, enum: ['Micro', 'Small', 'Medium', 'None'], default: 'None' },
+  msme_attached: { type: Boolean, default: false },
+  type: { type: String, enum: ['Single Specialty', 'Multi-Specialty'], required: true },
+
+  // SECTION B: ADDRESS & CONTACT DETAILS
+  address: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  contact_phone: { type: String, required: true },
+  contact_email: { type: String, required: true },
+  nodal_contacts: [{
+    purpose: { type: String, enum: ['Admission', 'Billing', 'Emergency', 'Grievance / Feedback'] },
+    name: String,
+    designation: String,
+    mobile: String,
+    email: String
+  }],
+
+  // SECTION C: BANK & STATUTORY COMPLIANCE
+  bank_ecs_attached: { type: Boolean, default: false },
+  accreditations: {
+    nabh: { type: Boolean, default: false },
+    nabl: { type: Boolean, default: false },
+    jci: { type: Boolean, default: false },
+    not_accredited: { type: Boolean, default: false }
+  },
+  accreditation_valid_until: Date,
+  accreditation_attached: { type: Boolean, default: false },
+  it_exemption: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  it_exemption_valid_until: Date,
+  it_exemption_attached: { type: Boolean, default: false },
+  statutory_clearances: {
+    fire_safety: { type: Boolean, default: false },
+    biomedical_waste: { type: Boolean, default: false },
+    aerb_approval: { type: Boolean, default: false },
+    pharmacy_license: { type: Boolean, default: false },
+    lift_safety: { type: Boolean, default: false },
+    cea_registration: { type: Boolean, default: false }
+  },
+
+  // SECTION D: CLINICAL SERVICES
+  specialties: [{ type: String }], // Searchable list from user request
+  core_specialties: [{ type: String }], // From Section D checkboxes
+  super_specialties: [{ type: String }], // From Section D checkboxes
+  support_services: [{ type: String }], // From Section D checkboxes
+
+  // SECTION E: FACILITIES AVAILABLE
+  facilities: {
+    advanced_trauma: { type: Boolean, default: false },
+    blood_bank: { type: Boolean, default: false },
+    dialysis: { type: Boolean, default: false },
+    organ_transplant: { type: Boolean, default: false },
+    burns_unit: { type: Boolean, default: false },
+    ipd_psychiatry: { type: Boolean, default: false },
+    ivf: { type: Boolean, default: false },
+    cathlab: { type: Boolean, default: false },
+    emergency: { type: Boolean, default: false },
+    ventilator: { type: Boolean, default: false },
+    nicu: { type: Boolean, default: false },
+    picu: { type: Boolean, default: false },
+    central_oxygen: { type: Boolean, default: false }
+  },
+  ambulance_facility: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  ambulance_free_pickup: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  diagnostic_facilities: {
+    ct: { type: String, enum: ['Yes', 'No'], default: 'No' },
+    mri: { type: String, enum: ['Yes', 'No'], default: 'No' },
+    pet_ct: { type: String, enum: ['Yes', 'No'], default: 'No' },
+    outsourced_info: String
+  },
+
+  // SECTION F: CAPACITY DETAILS
+  capacity: {
+    general: { type: Number, default: 0 },
+    semi_private: { type: Number, default: 0 },
+    private: { type: Number, default: 0 },
+    icu: { type: Number, default: 0 },
+    hdu: { type: Number, default: 0 }
+  },
+  total_beds: { type: Number, required: true },
+  tariffs_attached: { type: Boolean, default: false },
+
+  // SECTION G: SUPPORT SERVICES (Duplicate fields merged with facilities)
+  pathology_lab: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  pharmacy_24x7: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  trauma_support_24x7: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  corporate_help_desk: { type: String, enum: ['Yes', 'No'], default: 'No' },
+
+  // SECTION H: COMMERCIAL TERMS
+  cghs_rates_acceptable: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  ongc_discount_percent: { type: Number, default: 0 },
+  schedule_of_charges_attached: { type: Boolean, default: false },
+
+  // SECTION I: EXPERIENCE & ASSOCIATION
+  hospital_age: { type: Number },
+  outsourced_services: String,
+  panel_organizations_attached: { type: Boolean, default: false },
+  ongc_association_years: { type: Number, default: 0 },
+  ongc_patient_count: {
+    fy_23_24: { type: Number, default: 0 },
+    fy_24_25: { type: Number, default: 0 },
+    period_25: { type: Number, default: 0 }
+  },
+
+  // SECTION J: MANPOWER & FEEDBACK
+  consultants: [{
+    name: String,
+    specialty: String,
+    type: { type: String, enum: ['Full time', 'Visiting'] },
+    qualification: String,
+    experience_years: Number,
+    mobile: String
+  }],
+  paramedical_staff_count: { type: Number, default: 0 },
+  support_staff_count: { type: Number, default: 0 },
+  patient_feedbacks_attached: { type: Boolean, default: false },
+
+  // SECTION K: OTHER FACILITIES
+  general_facilities: {
+    parking: { type: Boolean, default: false },
+    power_backup: { type: Boolean, default: false },
+    central_ac: { type: Boolean, default: false },
+    waiting_lounge: { type: Boolean, default: false },
+    cafeteria: { type: Boolean, default: false },
+    attendant_lodging: { type: Boolean, default: false }
+  },
+
+  // SECTION L: DECLARATION
+  declaration_no_blacklisting: { type: Boolean, default: false },
+  achievements: String,
+
+  // Metadata & Analytics
+  status: { type: String, enum: ['pending', 'reviewed', 'selected', 'rejected'], default: 'pending' },
+  selected: { type: Boolean, default: false },
+  has_submitted: { type: Boolean, default: false }, // locked after first form submit
+  submitted_at: { type: Date, default: Date.now }
+}, { timestamps: true });
+
+// Hash password before saving
+hospitalSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
+
+// Compare password helper
+hospitalSchema.methods.comparePassword = async function (candidate) {
+  return bcrypt.compare(candidate, this.password);
+};
+
+// Virtual: computed category scores (0-100 each)
+hospitalSchema.virtual('categoryScores').get(function () {
+  return {
+    patient_outcomes: computePatientOutcomes(this),
+    infrastructure: computeInfrastructure(this),
+    staff_quality: computeStaffQuality(this),
+    financial_health: computeFinancialHealth(this),
+    technology: computeTechnology(this),
+    patient_satisfaction: computePatientSatisfaction(this),
+    accreditation: computeAccreditation(this),
+  };
+});
+
+hospitalSchema.set('toJSON', { virtuals: true });
+hospitalSchema.set('toObject', { virtuals: true });
+
+function clamp(v, min = 0, max = 100) {
+  if (v === null || v === undefined || isNaN(v)) return 0;
+  return Math.min(max, Math.max(min, v));
+}
+
+function norm(val, worst, best) {
+  if (best === worst) return 50;
+  return clamp(((val - worst) / (best - worst)) * 100);
+}
+
+function computePatientOutcomes(h) {
+  // Section I: ONGC Patient counts as a proxy for experience/outcomes
+  const total = (h.ongc_patient_count?.fy_23_24 || 0) + (h.ongc_patient_count?.fy_24_25 || 0);
+  return total > 100 ? 90 : total > 50 ? 75 : 50;
+}
+
+function computeInfrastructure(h) {
+  const scores = [];
+  if (h.total_beds) scores.push(norm(h.total_beds, 10, 500));
+  if (h.capacity?.icu && h.total_beds) scores.push(norm(h.capacity.icu / h.total_beds * 100, 0, 20));
+
+  const clearances = h.statutory_clearances || {};
+  const clearanceScore = (Object.values(clearances).filter(Boolean).length / 6) * 100;
+  scores.push(clearanceScore);
+
+  const facilities = h.facilities || {};
+  const facilityScore = (Object.values(facilities).filter(Boolean).length / 13) * 100;
+  scores.push(facilityScore);
+
+  return scores.length ? clamp(scores.reduce((a, b) => a + b, 0) / scores.length) : 50;
+}
+
+function computeStaffQuality(h) {
+  const scores = [];
+  const totalConsultants = h.consultants?.length || 0;
+  scores.push(norm(totalConsultants, 0, 50));
+
+  if (h.paramedical_staff_count) scores.push(norm(h.paramedical_staff_count, 0, 100));
+
+  // Experience avg if available in consultants
+  if (totalConsultants > 0) {
+    const avgExp = h.consultants.reduce((acc, c) => acc + (c.experience_years || 0), 0) / totalConsultants;
+    scores.push(norm(avgExp, 1, 20));
+  }
+
+  return scores.length ? clamp(scores.reduce((a, b) => a + b, 0) / scores.length) : 50;
+}
+
+function computeFinancialHealth(h) {
+  let score = 50;
+  if (h.cghs_rates_acceptable === 'Yes') score += 20;
+  if (h.ongc_discount_percent > 10) score += 20;
+  if (h.bank_ecs_attached) score += 10;
+  return clamp(score);
+}
+
+function computeTechnology(h) {
+  const diag = h.diagnostic_facilities || {};
+  const diagBools = [diag.ct === 'Yes', diag.mri === 'Yes', diag.pet_ct === 'Yes'];
+  return clamp((diagBools.filter(Boolean).length / 3) * 100);
+}
+
+function computePatientSatisfaction(h) {
+  return h.patient_feedbacks_attached ? 85 : 50;
+}
+
+function computeAccreditation(h) {
+  let score = 0;
+  const acc = h.accreditations || {};
+  if (acc.nabh) score += 40;
+  if (acc.jci) score += 40;
+  if (acc.nabl) score += 20;
+  return clamp(score);
+}
+
+module.exports = mongoose.model('Hospital', hospitalSchema);
