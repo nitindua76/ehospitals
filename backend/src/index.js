@@ -53,12 +53,22 @@ app.use('/api/export', require('./routes/export'));
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-// Debug route (Temporary - Remove after fix)
-app.get('/api/debug/admins', async (req, res) => {
+// Emergency Admin Reset (Use this to fix "Invalid Credentials" in production)
+app.get('/api/reset-admin', async (req, res) => {
     try {
         const Admin = require('./models/Admin');
-        const admins = await Admin.find({}, 'username');
-        res.json({ count: admins.length, admins });
+        const username = process.env.ADMIN_USERNAME || 'admin';
+        const password = process.env.ADMIN_PASSWORD || 'Admin@123';
+
+        let admin = await Admin.findOne({ username });
+        if (admin) {
+            admin.password = password;
+            await admin.save();
+        } else {
+            admin = new Admin({ username, password });
+            await admin.save();
+        }
+        res.json({ success: true, message: `Admin "${username}" is now ready!`, timestamp: new Date() });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
