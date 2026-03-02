@@ -198,7 +198,9 @@ function LoginPage({ onLogin }) {
         try {
             const res = await axios.post(`${API}/auth/login`, { username: u, password: p })
             onLogin(res.data.token)
-        } catch { setErr('Invalid credentials') }
+        } catch (err) {
+            setErr(err.response?.data?.error || 'Invalid credentials')
+        }
         finally { setLoading(false) }
     }
     return (

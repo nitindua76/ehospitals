@@ -38,8 +38,12 @@ app.use(limiter);
 // Strict limiter for login endpoint — max 10 attempts per 15 min per IP
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
-    message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+    max: 20, // Increased for a bit more breathing room
+    message: { error: 'Too many login attempts. Access is locked for 15 minutes.' },
+    handler: (req, res, next, options) => {
+        console.error(`⚠️ RATE LIMIT HIT: Login attempt blocked for IP ${req.ip}`);
+        res.status(options.statusCode).send(options.message);
+    },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -64,15 +68,19 @@ app.get('/api/reset-admin', async (req, res) => {
 
         console.log(`⚙️ Running Reset: Setting Admin "${username}" with password "${password.substring(0, 2)}***"`);
 
-        let admin = await Admin.findOne({ username });
+        const cleanUsername = username.toLowerCase().trim();
+        let admin = await Admin.findOne({ username: cleanUsername });
+
         if (admin) {
             admin.password = password;
             await admin.save();
+            console.log(`✅ Admin "${cleanUsername}" updated in database.`);
         } else {
-            admin = new Admin({ username, password });
+            admin = new Admin({ username: cleanUsername, password });
             await admin.save();
+            console.log(`✅ New Admin "${cleanUsername}" created in database.`);
         }
-        res.json({ success: true, message: `Admin "${username}" is now ready!`, timestamp: new Date() });
+        res.json({ success: true, message: `Admin "${cleanUsername}" is now ready!`, timestamp: new Date() });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
