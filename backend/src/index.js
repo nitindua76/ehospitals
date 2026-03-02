@@ -60,35 +60,36 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-// Connect and start
+// Start server immediately (required for Render health checks)
+app.listen(PORT, () => {
+    console.log(`🚀 Hospital Selection API running on port ${PORT}`);
+});
+
+// Connect to MongoDB in the background
 mongoose.connect(MONGO_URI)
     .then(async () => {
         console.log('✅ MongoDB connected');
 
         // Auto-seed if DB is empty
         const Admin = require('./models/Admin');
-        const Hospital = require('./models/Hospital');
         const ScoringConfig = require('./models/ScoringConfig');
         const adminCount = await Admin.countDocuments();
         if (adminCount === 0) {
             console.log('⚙️  No admin found, running auto-seed...');
-            const { execSync } = require('child_process');
             try {
+                const { execSync } = require('child_process');
                 execSync('node src/seed.js', { stdio: 'inherit' });
             } catch (e) {
-                // Try direct seeding if script doesn't work
-                const bcrypt = require('bcryptjs');
-                await Admin.create({ username: process.env.ADMIN_USERNAME || 'admin', password: process.env.ADMIN_PASSWORD || 'Admin@123' });
+                console.log('⚠️ Seeding failed, creating default admin...');
+                await Admin.create({
+                    username: process.env.ADMIN_USERNAME || 'admin',
+                    password: process.env.ADMIN_PASSWORD || 'Admin@123'
+                });
                 await ScoringConfig.create({ name: 'default' });
-                console.log('✅ Admin and config created');
             }
         }
-
-        app.listen(PORT, () => {
-            console.log(`🚀 Hospital Selection API running on port ${PORT}`);
-        });
     })
     .catch(err => {
         console.error('❌ MongoDB connection error:', err.message);
-        process.exit(1);
+        // Don't exit process, let the server stay up so we can see logs
     });
