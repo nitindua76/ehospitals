@@ -224,7 +224,10 @@ function LoginPage({ onLogin }) {
                         {loading ? <><div className="spinner" /> Signing in...</> : '🔐 Sign In'}
                     </button>
                 </form>
-                <p className="login-hint">Default: admin / Admin@123</p>
+                <div className="login-footer">
+                    <p className="login-hint">Default: admin / admin</p>
+                    <div className="api-debug">📡 Backend: <code>{API}</code></div>
+                </div>
             </div>
         </div>
     )
