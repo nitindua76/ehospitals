@@ -59,32 +59,8 @@ app.use('/api/export', require('./routes/export'));
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
-// Emergency Admin Reset (Use this to fix "Invalid Credentials" in production)
-app.get('/api/reset-admin', async (req, res) => {
-    try {
-        const Admin = require('./models/Admin');
-        const username = process.env.ADMIN_USERNAME || 'admin';
-        const password = process.env.ADMIN_PASSWORD || 'Admin@123';
-
-        console.log(`⚙️ Running Reset: Setting Admin "${username}" with password "${password.substring(0, 2)}***"`);
-
-        const cleanUsername = username.toLowerCase().trim();
-        let admin = await Admin.findOne({ username: cleanUsername });
-
-        if (admin) {
-            admin.password = password;
-            await admin.save();
-            console.log(`✅ Admin "${cleanUsername}" updated in database.`);
-        } else {
-            admin = new Admin({ username: cleanUsername, password });
-            await admin.save();
-            console.log(`✅ New Admin "${cleanUsername}" created in database.`);
-        }
-        res.json({ success: true, message: `Admin "${cleanUsername}" is now ready!`, timestamp: new Date() });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
+// Health check
+app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
