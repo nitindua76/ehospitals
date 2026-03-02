@@ -53,6 +53,17 @@ app.use('/api/export', require('./routes/export'));
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
 
+// Debug route (Temporary - Remove after fix)
+app.get('/api/debug/admins', async (req, res) => {
+    try {
+        const Admin = require('./models/Admin');
+        const admins = await Admin.find({}, 'username');
+        res.json({ count: admins.length, admins });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // 404 handler
 app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
