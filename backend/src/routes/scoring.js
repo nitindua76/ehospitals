@@ -5,6 +5,18 @@ const ScoringConfig = require('../models/ScoringConfig');
 const auth = require('../middleware/auth');
 const { computeCategoryScores } = require('../utils/computeScores');
 
+const ESSENTIAL_FACTOR_MAP = {
+    'fire_safety': 'statutory_clearances.fire_safety',
+    'central_ac': 'general_facilities.central_ac',
+    'nabh': 'accreditations.nabh',
+    'emergency': 'facilities.emergency',
+    'power_backup': 'general_facilities.power_backup'
+};
+
+function getDeepValue(obj, path) {
+    return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+}
+
 function computeOverallScore(categoryScores, weights) {
     const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0);
     if (totalWeight === 0) return 0;
@@ -33,7 +45,11 @@ router.put('/config', auth, async (req, res) => {
     try {
         const config = await ScoringConfig.findOneAndUpdate(
             { name: 'default' },
-            { weights: req.body.weights, updatedBy: req.admin.username },
+            {
+                weights: req.body.weights,
+                essentialFactors: req.body.essentialFactors,
+                updatedBy: req.admin.username
+            },
             { new: true, upsert: true }
         );
         res.json(config);
@@ -50,12 +66,22 @@ router.get('/rank', auth, async (req, res) => {
         const weights = config.weights.toObject ? config.weights.toObject() : config.weights;
 
         const hospitals = await Hospital.find().lean();
+        const essentialFactors = config.essentialFactors || [];
 
         const ranked = hospitals
             .map(h => {
                 const cs = computeCategoryScores(h);
-                const overallScore = computeOverallScore(cs, weights);
-                return { ...h, overallScore, categoryScores: cs };
+                let overallScore = computeOverallScore(cs, weights);
+
+                // Essential factor check
+                const missingFactors = essentialFactors.filter(f => !getDeepValue(h, ESSENTIAL_FACTOR_MAP[f]));
+                const ineligible = missingFactors.length > 0;
+
+                if (ineligible) {
+                    overallScore = Math.max(0, overallScore - 100); // Penalty for being ineligible
+                }
+
+                return { ...h, overallScore, categoryScores: cs, ineligible, missingFactors };
             })
             .sort((a, b) => b.overallScore - a.overallScore)
             .map((h, idx) => ({ ...h, rank: idx + 1 }));
@@ -70,13 +96,23 @@ router.get('/rank', auth, async (req, res) => {
 router.post('/rank', auth, async (req, res) => {
     try {
         const weights = req.body.weights;
+        const essentialFactors = req.body.essentialFactors || [];
         const hospitals = await Hospital.find().lean();
 
         const ranked = hospitals
             .map(h => {
                 const cs = computeCategoryScores(h);
-                const overallScore = computeOverallScore(cs, weights);
-                return { ...h, overallScore, categoryScores: cs };
+                let overallScore = computeOverallScore(cs, weights);
+
+                // Essential factor check
+                const missingFactors = essentialFactors.filter(f => !getDeepValue(h, ESSENTIAL_FACTOR_MAP[f]));
+                const ineligible = missingFactors.length > 0;
+
+                if (ineligible) {
+                    overallScore = Math.max(0, overallScore - 100);
+                }
+
+                return { ...h, overallScore, categoryScores: cs, ineligible, missingFactors };
             })
             .sort((a, b) => b.overallScore - a.overallScore)
             .map((h, idx) => ({ ...h, rank: idx + 1 }));

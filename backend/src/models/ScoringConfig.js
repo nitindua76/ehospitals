@@ -11,6 +11,7 @@ const scoringConfigSchema = new mongoose.Schema({
         patient_satisfaction: { type: Number, default: 15, min: 0, max: 100 },
         accreditation: { type: Number, default: 10, min: 0, max: 100 },
     },
+    essentialFactors: { type: [String], default: [] },
     updatedBy: { type: String, default: 'admin' },
 }, { timestamps: true });
 

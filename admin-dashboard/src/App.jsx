@@ -29,6 +29,13 @@ const FACTOR_LABELS = {
     accreditation: 'Accreditation',
 }
 const TYPE_COLORS = { Government: '#10b981', Private: '#6366f1', Trust: '#f59e0b', Corporate: '#06b6d4' }
+const ESSENTIAL_LABELS = {
+    'fire_safety': '🔥 Fire Safety',
+    'central_ac': '❄️ Central AC',
+    'nabh': '📜 NABH Accredited',
+    'emergency': '🏥 24x7 Emergency',
+    'power_backup': '⚡ Power Backup'
+}
 const PRESETS = {
     balanced: { patient_outcomes: 25, infrastructure: 15, staff_quality: 15, financial_health: 10, technology: 10, patient_satisfaction: 15, accreditation: 10 },
     clinical: { patient_outcomes: 40, infrastructure: 10, staff_quality: 25, financial_health: 5, technology: 5, patient_satisfaction: 10, accreditation: 5 },
@@ -49,6 +56,7 @@ export default function App() {
     const [view, setView] = useState('dashboard')
     const [hospitals, setHospitals] = useState([])
     const [weights, setWeights] = useState(PRESETS.balanced)
+    const [essentialFactors, setEssentialFactors] = useState([])
     const [stats, setStats] = useState(null)
     const [factors, setFactors] = useState([])
     const [loading, setLoading] = useState(false)
@@ -80,18 +88,19 @@ export default function App() {
             setStats(statsRes.data)
             setFactors(factorsRes.data.factors || [])
             if (cfgRes.data.weights) setWeights(cfgRes.data.weights)
+            if (cfgRes.data.essentialFactors) setEssentialFactors(cfgRes.data.essentialFactors)
         } catch { }
         finally { setLoading(false) }
     }, [token])
 
     useEffect(() => { fetchData() }, [fetchData])
 
-    const rerank = useCallback(async (w) => {
+    const rerank = useCallback(async (w, ef) => {
         try {
-            const res = await api.post('/scoring/rank', { weights: w })
+            const res = await api.post('/scoring/rank', { weights: w, essentialFactors: ef || essentialFactors })
             setHospitals(res.data.hospitals || [])
         } catch { }
-    }, [])
+    }, [essentialFactors])
 
     const handleWeightChange = (key, val) => {
         const newW = { ...weights, [key]: Number(val) }
@@ -100,8 +109,8 @@ export default function App() {
     }
 
     const saveWeights = async () => {
-        await api.put('/scoring/config', { weights })
-        showToast('Weights saved successfully!')
+        await api.put('/scoring/config', { weights, essentialFactors })
+        showToast('Configuration saved successfully!')
     }
 
     const toggleSelect = async (id) => {
@@ -232,7 +241,21 @@ export default function App() {
                     {view === 'ranking' && <RankingView hospitals={paginated} allHospitals={filtered} weights={weights} search={search} setSearch={setSearch} typeFilter={typeFilter} setTypeFilter={setTypeFilter} currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} perPage={perPage} onToggleSelect={toggleSelect} onViewHospital={setSelectedHospital} compareList={compareList} setCompareList={setCompareList} />}
                     {view === 'analytics' && <AnalyticsView hospitals={hospitals} />}
                     {view === 'compare' && <CompareView hospitals={hospitals} compareList={compareList} setCompareList={setCompareList} />}
-                    {view === 'weights' && <WeightsView weights={weights} setWeights={setWeights} factors={factors} onWeightChange={handleWeightChange} onSave={saveWeights} onPreset={(p) => { setWeights(PRESETS[p]); rerank(PRESETS[p]) }} />}
+                    {view === 'weights' && (
+                        <WeightsView
+                            weights={weights}
+                            essentialFactors={essentialFactors}
+                            factors={factors}
+                            onWeightChange={handleWeightChange}
+                            onEssentialChange={(key) => {
+                                const newEf = essentialFactors.includes(key) ? essentialFactors.filter(k => k !== key) : [...essentialFactors, key]
+                                setEssentialFactors(newEf)
+                                rerank(weights, newEf)
+                            }}
+                            onSave={saveWeights}
+                            onPreset={(k) => { setWeights(PRESETS[k]); rerank(PRESETS[k]) }}
+                        />
+                    )}
                 </div>
 
                 {selectedHospital && <HospitalDrawer hospital={selectedHospital} onClose={() => setSelectedHospital(null)} onToggleSelect={toggleSelect} />}
@@ -498,6 +521,7 @@ function RankingView({ hospitals, allHospitals, weights, search, setSearch, type
             <div className="rank-legend">
                 <span className="legend-item shortlisted">🟢 Top 20 — Shortlisted</span>
                 <span className="legend-item borderline">🟡 21–30 — Borderline</span>
+                <span className="legend-item ineligible">🔴 Ineligible</span>
                 <span className="legend-item">⚪ Rest</span>
             </div>
 
@@ -524,11 +548,14 @@ function RankingView({ hospitals, allHospitals, weights, search, setSearch, type
                             ))
                         ) : (
                             hospitals.map(h => (
-                                <tr key={h._id} className={`rank-row ${getRowClass(h.rank)}`}>
+                                <tr key={h._id} className={`rank-row ${h.ineligible ? 'ineligible' : getRowClass(h.rank)}`}>
                                     <td><span className={`rank-badge ${getRankClass(h.rank)}`}>{h.rank <= 3 ? ['🥇', '🥈', '🥉'][h.rank - 1] : `#${h.rank}`}</span></td>
                                     <td>
                                         <div className="hospital-cell">
-                                            <div className="hosp-name">{h.name}</div>
+                                            <div className="hosp-name">
+                                                {h.name}
+                                                {h.ineligible && <span className="ineligible-badge" title={`Missing: ${h.missingFactors.map(f => ESSENTIAL_LABELS[f]).join(', ')}`}>⚠️ Ineligible</span>}
+                                            </div>
                                             <div className="hosp-loc">📍 {h.city}, {h.state}</div>
                                         </div>
                                     </td>
@@ -969,7 +996,7 @@ function CompareView({ hospitals, compareList, setCompareList }) {
 /* ═══════════════════════════════════════════════
    WEIGHTS VIEW
 ═══════════════════════════════════════════════ */
-function WeightsView({ weights, factors, onWeightChange, onSave, onPreset }) {
+function WeightsView({ weights, essentialFactors, factors, onWeightChange, onEssentialChange, onSave, onPreset }) {
     const total = Object.values(weights).reduce((a, b) => a + b, 0)
     return (
         <div className="weights-view animate-in">
@@ -990,6 +1017,26 @@ function WeightsView({ weights, factors, onWeightChange, onSave, onPreset }) {
                         {k === 'balanced' ? '⚖️' : k === 'clinical' ? '🩺' : k === 'financial' ? '💰' : '💻'} {k.charAt(0).toUpperCase() + k.slice(1)}
                     </button>
                 ))}
+            </div>
+
+            {/* Essential Requirements */}
+            <div className="section-card" style={{ marginBottom: 24 }}>
+                <h4 style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>🛡️ Essential Requirements <span className="badge">Mandatory</span></h4>
+                <p style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>Select factors that are absolute deal-breakers. Hospitals without these will be flagged as ineligible.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
+                    {Object.entries(ESSENTIAL_LABELS).map(([key, label]) => (
+                        <label key={key} className={`essential-toggle ${essentialFactors.includes(key) ? 'active' : ''}`}>
+                            <input
+                                type="checkbox"
+                                checked={essentialFactors.includes(key)}
+                                onChange={() => onEssentialChange(key)}
+                                style={{ display: 'none' }}
+                            />
+                            <span className="toggle-icon">{essentialFactors.includes(key) ? '✅' : '☐'}</span>
+                            <span className="toggle-label">{label}</span>
+                        </label>
+                    ))}
+                </div>
             </div>
 
             <div className="sliders">
