@@ -346,12 +346,12 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
                     <div className="chart-card chart-wide">
                         <h3 className="chart-title">Top 5 Hospitals — Overall Score</h3>
                         <ResponsiveContainer width="100%" height={220}>
-                            <BarChart data={top5} layout="vertical" margin={{ left: 0 }}>
+                            <BarChart data={top5} layout="vertical" margin={{ left: 0, right: 30 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
-                                <XAxis type="number" hide />
-                                <YAxis type="category" dataKey="name" hide />
+                                <XAxis type="number" domain={[0, 100]} hide />
+                                <YAxis type="category" dataKey="name" width={120} tick={{ fill: '#94a3b8', fontSize: 11 }} />
                                 <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }} />
-                                <Bar dataKey="finalScore" radius={[0, 4, 4, 0]} name="Score">
+                                <Bar dataKey="overallScore" radius={[0, 4, 4, 0]} name="Score">
                                     {top5.map((e, i) => <Cell key={i} fill={['#6366f1', '#818cf8', '#10b981', '#34d399', '#f59e0b'][i]} />)}
                                 </Bar>
                             </BarChart>
