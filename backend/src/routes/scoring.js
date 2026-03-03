@@ -121,9 +121,9 @@ router.get('/stats', auth, async (req, res) => {
         const selectedCount = hospitals.filter(h => h.selected).length;
 
         // New Metrics
-        const totalBeds = hospitals.reduce((sum, h) => sum + (h.capacity?.total_beds || 0), 0);
+        const totalBeds = hospitals.reduce((sum, h) => sum + (h.total_beds || 0), 0);
         const avgBeds = total ? Math.round(totalBeds / total) : 0;
-        const totalDoctors = hospitals.reduce((sum, h) => sum + (h.staff?.total_doctors || 0), 0);
+        const totalDoctors = hospitals.reduce((sum, h) => sum + (h.consultants?.length || 0), 0);
         const avgDoctors = total ? Math.round(totalDoctors / total) : 0;
         const accreditedCount = hospitals.filter(h => h.accreditations?.nabh || h.accreditations?.jci).length;
 
