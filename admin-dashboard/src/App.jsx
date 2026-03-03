@@ -57,7 +57,14 @@ export default function App() {
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
+    const [toasts, setToasts] = useState([])
     const perPage = 12
+
+    const showToast = (msg, type = 'success') => {
+        const id = Date.now()
+        setToasts(prev => [...prev, { id, msg, type }])
+        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
+    }
 
     const fetchData = useCallback(async () => {
         if (!token) return
@@ -94,7 +101,7 @@ export default function App() {
 
     const saveWeights = async () => {
         await api.put('/scoring/config', { weights })
-        alert('Weights saved!')
+        showToast('Weights saved successfully!')
     }
 
     const toggleSelect = async (id) => {
@@ -121,12 +128,13 @@ export default function App() {
 
         try {
             await api.patch(`/hospitals/${id}/select`);
+            showToast(newSelectedState ? 'Hospital selected!' : 'Selection removed.');
         } catch (err) {
             console.error('Failed to toggle selection:', err);
             // Revert on error
             setHospitals(originalHospitals);
             setStats(originalStats);
-            alert('Failed to update selection. Please try again.');
+            showToast('Failed to update selection.', 'error');
         }
     }
 
@@ -201,6 +209,23 @@ export default function App() {
                 </header>
 
                 <div className="content-area">
+                    {/* Sticky Selection Bar */}
+                    {stats?.selectedCount > 0 && (
+                        <div className="selection-bar animate-in">
+                            <div className="selection-info">
+                                <span className="selection-count">{stats.selectedCount}</span>
+                                <div>
+                                    <h4 className="selection-title">Hospitals Selected</h4>
+                                    <p className="selection-desc">Ready for comparison or export</p>
+                                </div>
+                            </div>
+                            <div className="selection-actions">
+                                <button className="btn btn-ghost btn-sm" onClick={() => setView('ranking')}>🔍 View List</button>
+                                <button className="btn btn-success btn-sm" onClick={exportSelected}>🎯 Export Selection</button>
+                            </div>
+                        </div>
+                    )}
+
                     {loading && <div className="loading-bar"><div className="loading-fill" /></div>}
 
                     {view === 'dashboard' && <DashboardView stats={stats} hospitals={hospitals} weights={weights} factors={factors} setView={setView} />}
@@ -211,6 +236,18 @@ export default function App() {
                 </div>
 
                 {selectedHospital && <HospitalDrawer hospital={selectedHospital} onClose={() => setSelectedHospital(null)} onToggleSelect={toggleSelect} />}
+
+                {/* Toast Container */}
+                <div className="toast-container">
+                    {toasts.map(t => (
+                        <div key={t.id} className={`toast-item ${t.type}`}>
+                            <span className="toast-icon">
+                                {t.type === 'success' ? '✅' : t.type === 'error' ? '❌' : 'ℹ️'}
+                            </span>
+                            <span className="toast-msg">{t.msg}</span>
+                        </div>
+                    ))}
+                </div>
             </main>
         </div>
     )
@@ -271,42 +308,56 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
         <div className="dashboard-view animate-in">
             {/* KPI Cards */}
             <div className="kpi-grid">
-                <KpiCard icon="🏥" value={stats.total} label="Total Submissions" color="#6366f1" />
-                <KpiCard icon="⭐" value={stats.avgScore} label="Average Score" color="#10b981" suffix="/100" />
-                <KpiCard icon="🎯" value={stats.selectedCount} label="Selected Hospitals" color="#06b6d4" />
-                <KpiCard icon="🏆" value={stats.topHospital?.split(' ').slice(0, 2).join(' ')} label="Top Ranked" color="#f59e0b" isText />
+                {!stats ? (
+                    [1, 2, 3, 4].map(i => <div key={i} className="kpi-card skeleton-pulse" style={{ height: '110px' }} />)
+                ) : (
+                    <>
+                        <KpiCard icon="🏥" value={stats.total} label="Total Submissions" color="#6366f1" />
+                        <KpiCard icon="⭐" value={stats.avgScore} label="Average Score" color="#10b981" suffix="/100" />
+                        <KpiCard icon="🎯" value={stats.selectedCount} label="Selected Hospitals" color="#06b6d4" />
+                        <KpiCard icon="🏆" value={stats.topHospital?.split(' ').slice(0, 2).join(' ')} label="Top Ranked" color="#f59e0b" isText />
+                    </>
+                )}
             </div>
 
             {/* Charts row */}
             <div className="charts-row">
                 {/* Type Pie */}
-                <div className="chart-card">
-                    <h3 className="chart-title">Hospital Type Distribution</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                        <PieChart>
-                            <Pie data={typeData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
-                                {typeData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                            </Pie>
-                            <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }} />
-                        </PieChart>
-                    </ResponsiveContainer>
-                </div>
+                {!stats ? (
+                    <div className="chart-card skeleton-pulse" style={{ height: '260px' }} />
+                ) : (
+                    <div className="chart-card">
+                        <h3 className="chart-title">Hospital Type Distribution</h3>
+                        <ResponsiveContainer width="100%" height={220}>
+                            <PieChart>
+                                <Pie data={typeData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                                    {typeData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                                </Pie>
+                                <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
 
                 {/* Top 5 bar */}
-                <div className="chart-card chart-wide">
-                    <h3 className="chart-title">Top 5 Hospitals — Overall Score</h3>
-                    <ResponsiveContainer width="100%" height={220}>
-                        <BarChart data={top5} layout="vertical" margin={{ left: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
-                            <XAxis type="number" domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 11 }} />
-                            <YAxis type="category" dataKey="name" width={140} tick={{ fill: '#94a3b8', fontSize: 11 }} tickFormatter={v => v.length > 18 ? v.slice(0, 16) + '...' : v} />
-                            <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }} />
-                            <Bar dataKey="overallScore" fill="url(#bg)" radius={4} name="Score">
-                                {top5.map((e, i) => <Cell key={i} fill={['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b'][i]} />)}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
+                {!hospitals.length ? (
+                    <div className="chart-card chart-wide skeleton-pulse" style={{ height: '260px' }} />
+                ) : (
+                    <div className="chart-card chart-wide">
+                        <h3 className="chart-title">Top 5 Hospitals — Overall Score</h3>
+                        <ResponsiveContainer width="100%" height={220}>
+                            <BarChart data={top5} layout="vertical" margin={{ left: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
+                                <XAxis type="number" hide />
+                                <YAxis type="category" dataKey="name" hide />
+                                <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }} />
+                                <Bar dataKey="finalScore" radius={[0, 4, 4, 0]} name="Score">
+                                    {top5.map((e, i) => <Cell key={i} fill={['#6366f1', '#818cf8', '#10b981', '#34d399', '#f59e0b'][i]} />)}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
             </div>
 
             {/* Selected hospitals */}
@@ -390,42 +441,46 @@ function RankingView({ hospitals, allHospitals, weights, search, setSearch, type
                             <th>Rank</th>
                             <th>Hospital</th>
                             <th>Type</th>
-                            <th>Score</th>
-                            {Object.keys(FACTOR_LABELS).map(k => <th key={k} title={FACTOR_LABELS[k]}>{FACTOR_LABELS[k].split(' ')[0]}</th>)}
+                            <th>Overall Score</th>
                             <th>Compare</th>
-                            <th>Select</th>
+                            <th>Action</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        {hospitals.map(h => (
-                            <tr key={h._id} className={`rank-row ${getRowClass(h.rank)}`}>
-                                <td><span className={`rank-badge ${getRankClass(h.rank)}`}>{h.rank <= 3 ? ['🥇', '🥈', '🥉'][h.rank - 1] : `#${h.rank}`}</span></td>
-                                <td>
-                                    <div className="hospital-cell">
-                                        <div className="hosp-name">{h.name}</div>
-                                        <div className="hosp-loc">📍 {h.city}, {h.state}</div>
-                                    </div>
-                                </td>
-                                <td><span className="type-badge" style={{ '--tc': TYPE_COLORS[h.type] }}>{h.type}</span></td>
-                                <td>
-                                    <div className="score-cell">
-                                        <span className="score-num">{h.overallScore}</span>
-                                        <div className="score-mini-bar"><div style={{ width: `${h.overallScore}%`, background: h.overallScore >= 80 ? '#10b981' : h.overallScore >= 60 ? '#f59e0b' : '#ef4444' }} /></div>
-                                    </div>
-                                </td>
-                                {Object.keys(FACTOR_LABELS).map(k => (
-                                    <td key={k}><span className={`sub-score ${scoreClass(h.categoryScores?.[k])}`}>{Math.round(h.categoryScores?.[k] || 0)}</span></td>
-                                ))}
-                                <td><input type="checkbox" checked={compareList.includes(h._id)} onChange={() => toggleCompare(h._id)} /></td>
-                                <td>
-                                    <button className={`select-btn ${h.selected ? 'selected' : ''}`} onClick={() => onToggleSelect(h._id)}>
-                                        {h.selected ? '✅' : '○'}
-                                    </button>
-                                </td>
-                                <td><button className="btn btn-ghost btn-sm" onClick={() => onViewHospital(h)}>👁</button></td>
-                            </tr>
-                        ))}
+                        {!hospitals.length ? (
+                            [1, 2, 3, 4, 5, 6].map(i => (
+                                <tr key={i} className="skeleton-row">
+                                    <td colSpan="7"><div className="skeleton-pulse" style={{ height: '48px', borderRadius: '4px' }} /></td>
+                                </tr>
+                            ))
+                        ) : (
+                            hospitals.map(h => (
+                                <tr key={h._id} className={`rank-row ${getRowClass(h.rank)}`}>
+                                    <td><span className={`rank-badge ${getRankClass(h.rank)}`}>{h.rank <= 3 ? ['🥇', '🥈', '🥉'][h.rank - 1] : `#${h.rank}`}</span></td>
+                                    <td>
+                                        <div className="hospital-cell">
+                                            <div className="hosp-name">{h.name}</div>
+                                            <div className="hosp-loc">📍 {h.city}, {h.state}</div>
+                                        </div>
+                                    </td>
+                                    <td><span className="type-badge" style={{ '--tc': TYPE_COLORS[h.type] }}>{h.type}</span></td>
+                                    <td>
+                                        <div className="score-cell">
+                                            <span className="score-num">{h.overallScore}</span>
+                                            <div className="score-mini-bar"><div style={{ width: `${h.overallScore}%`, background: h.overallScore >= 80 ? '#10b981' : h.overallScore >= 60 ? '#f59e0b' : '#ef4444' }} /></div>
+                                        </div>
+                                    </td>
+                                    <td><input type="checkbox" checked={compareList.includes(h._id)} onChange={() => toggleCompare(h._id)} /></td>
+                                    <td>
+                                        <button className={`select-btn ${h.selected ? 'selected' : ''}`} onClick={() => onToggleSelect(h._id)}>
+                                            {h.selected ? '✅' : '○'}
+                                        </button>
+                                    </td>
+                                    <td><button className="btn btn-ghost btn-sm" onClick={() => onViewHospital(h)}>👁</button></td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
