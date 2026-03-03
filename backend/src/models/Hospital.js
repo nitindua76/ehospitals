@@ -19,11 +19,12 @@ const hospitalSchema = new mongoose.Schema({
   type: { type: String, enum: ['Single Specialty', 'Multi-Specialty'], required: true },
 
   // SECTION B: ADDRESS & CONTACT DETAILS
-  address: { type: String, required: true },
-  city: { type: String, required: true },
-  state: { type: String, required: true },
-  contact_phone: { type: String, required: true },
-  contact_email: { type: String, required: true },
+  // SECTION B: ADDRESS & CONTACT DETAILS
+  address: { type: String },
+  city: { type: String },
+  state: { type: String },
+  contact_phone: { type: String },
+  contact_email: { type: String },
   nodal_contacts: [{
     purpose: { type: String, enum: ['Admission', 'Billing', 'Emergency', 'Grievance / Feedback'] },
     name: String,
@@ -145,11 +146,24 @@ const hospitalSchema = new mongoose.Schema({
   declaration_no_blacklisting: { type: Boolean, default: false },
   achievements: String,
 
+  // SECTION M: DOCUMENTS (GridFS File IDs)
+  attachments: {
+    pan: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    gst: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    accreditation: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    fire_safety: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    bank_ecs: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    tariff: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    biomedical: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    pharmacy: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' }
+  },
+
   // Metadata & Analytics
   status: { type: String, enum: ['pending', 'reviewed', 'selected', 'rejected'], default: 'pending' },
   selected: { type: Boolean, default: false },
   has_submitted: { type: Boolean, default: false }, // locked after first form submit
-  submitted_at: { type: Date, default: Date.now }
+  current_step: { type: Number, default: 1 },
+  submitted_at: { type: Date }
 }, { timestamps: true });
 
 // Hash password before saving

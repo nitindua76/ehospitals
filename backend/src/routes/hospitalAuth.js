@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Hospital = require('../models/Hospital');
+const { upload } = require('../utils/storage');
+const hospitalAuth = require('../middleware/hospitalAuth');
 
 // POST /api/hospital-auth/login — Hospital logs in with their username + password
 router.post('/login', async (req, res) => {
@@ -69,23 +71,71 @@ router.get('/me', require('../middleware/hospitalAuth'), async (req, res) => {
 });
 
 // PUT /api/hospital-auth/me — Hospital updates their own submission (requires hospital token)
-router.put('/me', require('../middleware/hospitalAuth'), async (req, res) => {
+router.put('/me', hospitalAuth, async (req, res) => {
     try {
-        // Check: has this hospital already submitted?
         const existing = await Hospital.findById(req.hospital.id);
         if (!existing) return res.status(404).json({ error: 'Hospital not found' });
+
+        // Allowed to update even if submitted? Actually, let's keep it locked if has_submitted is true
         if (existing.has_submitted) {
             return res.status(409).json({ error: 'You have already submitted your information. Re-submission is not allowed.' });
         }
 
-        const { username, password, status, selected, has_submitted, ...updateData } = req.body; // Prevent privilege escalation
+        const { username, password, status, selected, has_submitted, ...updateData } = req.body;
         const hospital = await Hospital.findByIdAndUpdate(
             req.hospital.id,
-            { $set: { ...updateData, has_submitted: true, submitted_at: new Date() } },
-            { new: true, runValidators: true }
+            { $set: updateData },
+            { new: true, runValidators: false } // Relax validation for drafts
         ).lean({ virtuals: true });
+
         const { password: _p, ...safeData } = hospital;
         res.json({ success: true, hospital: safeData });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// POST /api/hospital-auth/upload — Upload a file (requires hospital token)
+router.post('/upload', hospitalAuth, upload.single('file'), async (req, res) => {
+    try {
+        const { field } = req.body; // e.g., 'pan', 'gst'
+        if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+        if (!field) return res.status(400).json({ error: 'Field name required' });
+
+        await Hospital.findByIdAndUpdate(req.hospital.id, {
+            $set: {
+                [`attachments.${field}`]: req.file.id,
+                [`${field}_attached`]: true
+            }
+        });
+
+        res.json({
+            success: true,
+            fileId: req.file.id,
+            filename: req.file.filename,
+            message: 'File uploaded and linked successfully'
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/hospital-auth/submit — Final submission (requires hospital token)
+router.post('/submit', hospitalAuth, async (req, res) => {
+    try {
+        const hospital = await Hospital.findById(req.hospital.id);
+        if (!hospital) return res.status(404).json({ error: 'Hospital not found' });
+        if (hospital.has_submitted) {
+            return res.status(409).json({ error: 'Already submitted' });
+        }
+
+        // Final validation can be done here if needed
+        hospital.has_submitted = true;
+        hospital.submitted_at = new Date();
+        hospital.status = 'pending';
+        await hospital.save();
+
+        res.json({ success: true, message: 'Application submitted successfully' });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
