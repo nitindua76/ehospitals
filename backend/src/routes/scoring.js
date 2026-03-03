@@ -120,13 +120,32 @@ router.get('/stats', auth, async (req, res) => {
         const topHospital = ranked.sort((a, b) => b.overallScore - a.overallScore)[0];
         const selectedCount = hospitals.filter(h => h.selected).length;
 
+        // New Metrics
+        const totalBeds = hospitals.reduce((sum, h) => sum + (h.capacity?.total_beds || 0), 0);
+        const avgBeds = total ? Math.round(totalBeds / total) : 0;
+        const totalDoctors = hospitals.reduce((sum, h) => sum + (h.staff?.total_doctors || 0), 0);
+        const avgDoctors = total ? Math.round(totalDoctors / total) : 0;
+        const accreditedCount = hospitals.filter(h => h.accreditations?.nabh || h.accreditations?.jci).length;
+
         const typeDistribution = {};
         hospitals.forEach(h => { typeDistribution[h.type] = (typeDistribution[h.type] || 0) + 1; });
 
         const stateDistribution = {};
         hospitals.forEach(h => { stateDistribution[h.state] = (stateDistribution[h.state] || 0) + 1; });
 
-        res.json({ total, avgScore, topHospital: topHospital?.name, selectedCount, typeDistribution, stateDistribution });
+        res.json({
+            total,
+            avgScore,
+            topHospital: topHospital?.name,
+            selectedCount,
+            typeDistribution,
+            stateDistribution,
+            totalBeds,
+            avgBeds,
+            totalDoctors,
+            avgDoctors,
+            accreditedCount
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

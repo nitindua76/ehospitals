@@ -301,7 +301,9 @@ function LoginPage({ onLogin }) {
 function DashboardView({ stats, hospitals, weights, factors, setView }) {
     if (!stats) return <div className="loading-state"><div className="spinner" /></div>
     const top5 = hospitals.slice(0, 5)
+    const top5Outcomes = [...hospitals].sort((a, b) => (b.categoryScores?.patient_outcomes || 0) - (a.categoryScores?.patient_outcomes || 0)).slice(0, 5)
     const typeData = Object.entries(stats.typeDistribution || {}).map(([name, value]) => ({ name, value, color: TYPE_COLORS[name] || '#6366f1' }))
+    const stateData = Object.entries(stats.stateDistribution || {}).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5)
     const selected = hospitals.filter(h => h.selected)
 
     return (
@@ -309,12 +311,14 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
             {/* KPI Cards */}
             <div className="kpi-grid">
                 {!stats ? (
-                    [1, 2, 3, 4].map(i => <div key={i} className="kpi-card skeleton-pulse" style={{ height: '110px' }} />)
+                    [1, 2, 3, 4, 5, 6].map(i => <div key={i} className="kpi-card skeleton-pulse" style={{ height: '110px' }} />)
                 ) : (
                     <>
                         <KpiCard icon="🏥" value={stats.total} label="Total Submissions" color="#6366f1" />
                         <KpiCard icon="⭐" value={stats.avgScore} label="Average Score" color="#10b981" suffix="/100" />
                         <KpiCard icon="🎯" value={stats.selectedCount} label="Selected Hospitals" color="#06b6d4" />
+                        <KpiCard icon="🛏️" value={stats.totalBeds} label="Total Bed Capacity" color="#8b5cf6" />
+                        <KpiCard icon="📜" value={stats.accreditedCount} label="Accredited" color="#f97316" />
                         <KpiCard icon="🏆" value={stats.topHospital?.split(' ').slice(0, 2).join(' ')} label="Top Ranked" color="#f59e0b" isText />
                     </>
                 )}
@@ -328,14 +332,14 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
                 ) : (
                     <div className="chart-card">
                         <h3 className="chart-title">Hospital Type Distribution</h3>
-                        <ResponsiveContainer width="100%" height={220}>
+                        <ResponsiveContainer width="100%" height={200}>
                             <PieChart>
                                 <Pie
                                     data={typeData}
                                     cx="50%"
                                     cy="50%"
-                                    innerRadius={55}
-                                    outerRadius={90}
+                                    innerRadius={50}
+                                    outerRadius={80}
                                     paddingAngle={3}
                                     dataKey="value"
                                     label={{ fill: '#e2e8f0', fontSize: 10 }}
@@ -353,13 +357,37 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
                     </div>
                 )}
 
+                {/* State Bar */}
+                {!stats ? (
+                    <div className="chart-card skeleton-pulse" style={{ height: '260px' }} />
+                ) : (
+                    <div className="chart-card">
+                        <h3 className="chart-title">🗺️ Geographic Mix (Top 5 States)</h3>
+                        <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={stateData} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
+                                <XAxis type="number" hide />
+                                <YAxis type="category" dataKey="name" width={70} tick={{ fill: '#94a3b8', fontSize: 10 }} />
+                                <Tooltip
+                                    contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }}
+                                    itemStyle={{ color: '#e2e8f0' }}
+                                    labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                                />
+                                <Bar dataKey="count" fill="#06b6d4" radius={[0, 4, 4, 0]} name="Hospitals" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
+            </div>
+
+            <div className="charts-row">
                 {/* Top 5 bar */}
                 {!hospitals.length ? (
                     <div className="chart-card chart-wide skeleton-pulse" style={{ height: '260px' }} />
                 ) : (
                     <div className="chart-card chart-wide">
                         <h3 className="chart-title">Top 5 Hospitals — Overall Score</h3>
-                        <ResponsiveContainer width="100%" height={220}>
+                        <ResponsiveContainer width="100%" height={200}>
                             <BarChart data={top5} layout="vertical" margin={{ left: 0, right: 30 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                                 <XAxis type="number" domain={[0, 100]} hide />
@@ -372,6 +400,28 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
                                 <Bar dataKey="overallScore" radius={[0, 4, 4, 0]} name="Score">
                                     {top5.map((e, i) => <Cell key={i} fill={['#6366f1', '#818cf8', '#10b981', '#34d399', '#f59e0b'][i]} />)}
                                 </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                )}
+
+                {/* Top 5 Outcomes */}
+                {!hospitals.length ? (
+                    <div className="chart-card chart-wide skeleton-pulse" style={{ height: '260px' }} />
+                ) : (
+                    <div className="chart-card chart-wide">
+                        <h3 className="chart-title">🩺 Top 5 Clinical Performers (Outcomes)</h3>
+                        <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={top5Outcomes} layout="vertical" margin={{ left: 0, right: 30 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
+                                <XAxis type="number" domain={[0, 100]} hide />
+                                <YAxis type="category" dataKey="name" width={120} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                                <Tooltip
+                                    contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }}
+                                    itemStyle={{ color: '#e2e8f0' }}
+                                    labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                                />
+                                <Bar dataKey="categoryScores.patient_outcomes" radius={[0, 4, 4, 0]} name="Outcome Score" fill="#10b981" />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -652,18 +702,20 @@ function AnalyticsView({ hospitals }) {
                     </ResponsiveContainer>
                 </div>
                 <div className="chart-card">
-                    <h3 className="chart-title">🗺️ Hospitals by State (Top 10)</h3>
+                    <h3 className="chart-title">📊 Score Ranges</h3>
                     <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={stateData} layout="vertical">
+                        <BarChart data={scoreDistribution}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
-                            <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                            <YAxis type="category" dataKey="name" width={90} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                            <XAxis dataKey="range" tick={{ fill: '#94a3b8', fontSize: 11 }} />
+                            <YAxis tick={{ fill: '#64748b', fontSize: 11 }} />
                             <Tooltip
                                 contentStyle={TOOLTIP_STYLE}
                                 itemStyle={TOOLTIP_STYLE.itemStyle}
                                 labelStyle={TOOLTIP_STYLE.labelStyle}
                             />
-                            <Bar dataKey="count" fill="#06b6d4" radius={[0, 4, 4, 0]} name="Count" />
+                            <Bar dataKey="count" name="Hospitals" radius={[6, 6, 0, 0]}>
+                                {scoreDistribution.map((e, i) => <Cell key={i} fill={['#6366f1', '#10b981', '#f59e0b', '#f97316', '#ef4444'][i]} />)}
+                            </Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

@@ -37,6 +37,7 @@
     font-weight: 800;
     background: linear-gradient(135deg, #818cf8, #34d399);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.02em;
 }
@@ -122,6 +123,7 @@
     letter-spacing: -0.03em;
     background: linear-gradient(135deg, #f1f5f9, #94a3b8);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -179,14 +181,26 @@
 /* ── KPI ── */
 .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 16px;
     margin-bottom: 24px;
 }
 
-@media(max-width:900px) {
+@media(max-width:1200px) {
+    .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media(max-width:768px) {
     .kpi-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media(max-width:480px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -255,9 +269,13 @@
 /* ── Charts ── */
 .charts-row {
     display: grid;
-    grid-template-columns: 1fr 1.8fr;
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 16px;
+}
+
+.charts-row:first-of-type {
+    grid-template-columns: 1fr 1.5fr;
 }
 
 @media(max-width:900px) {
@@ -1168,6 +1186,7 @@
     font-weight: 900;
     background: linear-gradient(135deg, #818cf8, #34d399);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.03em;
     margin-bottom: 6px;
