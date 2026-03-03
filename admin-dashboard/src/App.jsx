@@ -98,8 +98,36 @@ export default function App() {
     }
 
     const toggleSelect = async (id) => {
-        await api.patch(`/hospitals/${id}/select`)
-        fetchData()
+        // Optimistic Update
+        const target = hospitals.find(h => h._id === id);
+        if (!target) return;
+
+        const originalHospitals = [...hospitals];
+        const originalStats = { ...stats };
+        const newSelectedState = !target.selected;
+
+        // Update hospitals
+        setHospitals(hospitals.map(h =>
+            h._id === id ? { ...h, selected: newSelectedState } : h
+        ));
+
+        // Update stats (selectedCount)
+        if (stats) {
+            setStats({
+                ...stats,
+                selectedCount: stats.selectedCount + (newSelectedState ? 1 : -1)
+            });
+        }
+
+        try {
+            await api.patch(`/hospitals/${id}/select`);
+        } catch (err) {
+            console.error('Failed to toggle selection:', err);
+            // Revert on error
+            setHospitals(originalHospitals);
+            setStats(originalStats);
+            alert('Failed to update selection. Please try again.');
+        }
     }
 
     const downloadCSV = async (url, filename) => {
