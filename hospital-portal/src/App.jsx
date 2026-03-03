@@ -234,9 +234,19 @@ export default function App() {
 
     // Block access until hospital is logged in
     if (!hospitalAuth) {
-        return <HospitalLoginScreen onAuth={(data) => {
+        return <HospitalLoginScreen onAuth={async (data) => {
             sessionStorage.setItem('hospital_submitted', data.has_submitted ? 'true' : 'false')
             setHospitalAuth(data)
+            // Load existing data from response
+            try {
+                const res = await axios.get(`${API}/hospital-auth/me`, {
+                    headers: { Authorization: `Bearer ${data.token}` }
+                })
+                if (res.data) {
+                    setForm(f => ({ ...f, ...res.data }))
+                    if (res.data.current_step) setStep(res.data.current_step)
+                }
+            } catch (e) { console.error('Error loading draft:', e) }
         }} />
     }
 
@@ -264,11 +274,28 @@ export default function App() {
         return Object.keys(e).length === 0
     }
 
+    const saveDraft = async (nextStep) => {
+        try {
+            const payload = { ...form, current_step: nextStep || step }
+            await axios.put(`${API}/hospital-auth/me`, payload, {
+                headers: { Authorization: `Bearer ${hospitalAuth.token}` }
+            })
+        } catch (e) {
+            console.error('Draft save failed:', e)
+        }
+    }
+
     const next = () => {
         if (!validate(step)) return
-        setStep(s => Math.min(s + 1, STEPS.length))
+        const nextStep = Math.min(step + 1, STEPS.length)
+        saveDraft(nextStep)
+        setStep(nextStep)
     }
-    const prev = () => setStep(s => Math.max(s - 1, 1))
+    const prev = () => {
+        const prevStep = Math.max(step - 1, 1)
+        saveDraft(prevStep)
+        setStep(prevStep)
+    }
 
     const updateArrayField = (field, index, subfield, value) => {
         setForm(f => {
@@ -287,18 +314,16 @@ export default function App() {
     const submit = async () => {
         setLoading(true)
         try {
-            const payload = { ...form }
-            // Basic cleanup of numeric fields
-            const numberFields = ['total_beds', 'hospital_age', 'ongc_association_years', 'paramedical_staff_count', 'support_staff_count', 'ongc_discount_percent']
-            numberFields.forEach(f => { if (payload[f] !== '') payload[f] = Number(payload[f]); else delete payload[f] })
-            // Use PUT /hospital-auth/me with the hospital JWT to update their record
-            const res = await axios.put(`${API}/hospital-auth/me`, payload, {
+            // Final auto-save first
+            await saveDraft(step)
+            // Call the dedicated submit endpoint
+            const res = await axios.post(`${API}/hospital-auth/submit`, {}, {
                 headers: { Authorization: `Bearer ${hospitalAuth.token}` }
             })
-            // Mark as submitted so the form is locked permanently
+            // Mark as submitted
             sessionStorage.setItem('hospital_submitted', 'true')
             setHospitalAuth(a => ({ ...a, has_submitted: true }))
-            setSubmitted(res.data)
+            setSubmitted({ success: true, hospital: { _id: hospitalAuth.hospitalId } })
         } catch (err) {
             alert(err.response?.data?.error || 'Submission failed. Please try again.')
         } finally {
@@ -907,10 +932,29 @@ function Step13({ attachedFiles, setAttachedFiles }) {
         { key: 'pharmacy', label: 'Pharmacy License', hint: 'Valid pharmacy operating license' },
     ]
 
-    const handleFile = (key, e) => {
+    const handleFile = async (key, e) => {
         const file = e.target.files[0]
         if (!file) return
-        setAttachedFiles(prev => ({ ...prev, [key]: file }))
+
+        // Immediate upload to backend
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('field', key)
+
+        try {
+            setAttachedFiles(prev => ({ ...prev, [key]: { name: file.name, uploading: true } }))
+            const token = sessionStorage.getItem('hospital_token')
+            await axios.post(`${API}/hospital-auth/upload`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            setAttachedFiles(prev => ({ ...prev, [key]: { name: file.name, size: file.size, uploaded: true } }))
+        } catch (err) {
+            alert(`Failed to upload ${file.name}: ${err.response?.data?.error || err.message}`)
+            setAttachedFiles(prev => { const n = { ...prev }; delete n[key]; return n })
+        }
     }
 
     const removeFile = (key) => {
@@ -934,9 +978,12 @@ function Step13({ attachedFiles, setAttachedFiles }) {
                         </div>
                         <span className="attachment-hint">{doc.hint}</span>
                         {attachedFiles[doc.key] ? (
-                            <div className="attachment-selected">
-                                📄 {attachedFiles[doc.key].name}
-                                <span className="file-size">({(attachedFiles[doc.key].size / 1024).toFixed(1)} KB)</span>
+                            <div className={`attachment-selected ${attachedFiles[doc.key].uploading ? 'uploading' : ''}`}>
+                                {attachedFiles[doc.key].uploading ? '⏳ ' : '✅ '}
+                                {attachedFiles[doc.key].name}
+                                {attachedFiles[doc.key].size && (
+                                    <span className="file-size">({(attachedFiles[doc.key].size / 1024).toFixed(1)} KB)</span>
+                                )}
                             </div>
                         ) : (
                             <label className="file-drop-zone">

@@ -131,16 +131,22 @@ hospital-selection/
 | GET | `/api/export/csv` | Admin | Download all as CSV |
 | POST | `/api/auth/login` | No | Admin login |
 
----
+## 🌍 Deployment & Database
 
-## 🌍 Environment Variables
+The system uses **MongoDB** as its database and **GridFS** for document storage (PDFs/Images).
 
-Copy `.env.example` to `.env` and adjust:
+The database used by the deployed version is controlled by the `MONGO_URI` environment variable:
+
+- **Local Deployment (Docker Compose)**: 
+  - On any machine, running `docker compose up` starts a **local MongoDB container**. 
+  - All data lives only on that machine.
+- **Cloud Deployment (Render/Railway/etc.)**: 
+  - Since `.env` is ignored by Git, you must manually go to your cloud provider's dashboard and set `MONGO_URI`.
+  - To use a "local" database on a cloud platform, you must add an internal MongoDB service on that platform and use its internal URI.
 
 ```env
+# Docker Internal URI
 MONGO_URI=mongodb://mongodb:27017/hospital_selection
-JWT_SECRET=your_super_secret_key
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=Admin@123
-PORT=5000
+# Manual/Localhost URI
+MONGO_URI=mongodb://localhost:27017/hospital_selection
 ```

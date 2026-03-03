@@ -3,7 +3,8 @@ services:
     image: mongo:7
     container_name: hospital_mongodb
     restart: unless-stopped
-    # Port 27017 intentionally NOT exposed — only accessible within Docker network
+    ports:
+      - "27017:27017" # Exposed for local debugging/tools
     volumes:
       - mongo_data:/data/db
     networks:
