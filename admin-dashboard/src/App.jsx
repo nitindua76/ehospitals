@@ -330,10 +330,24 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
                         <h3 className="chart-title">Hospital Type Distribution</h3>
                         <ResponsiveContainer width="100%" height={220}>
                             <PieChart>
-                                <Pie data={typeData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                                <Pie
+                                    data={typeData}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={55}
+                                    outerRadius={90}
+                                    paddingAngle={3}
+                                    dataKey="value"
+                                    label={{ fill: '#e2e8f0', fontSize: 10 }}
+                                    labelLine={false}
+                                >
                                     {typeData.map((e, i) => <Cell key={i} fill={e.color} />)}
                                 </Pie>
-                                <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }} />
+                                <Tooltip
+                                    contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }}
+                                    itemStyle={{ color: '#e2e8f0' }}
+                                    labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                                />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
@@ -350,7 +364,11 @@ function DashboardView({ stats, hospitals, weights, factors, setView }) {
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                                 <XAxis type="number" domain={[0, 100]} hide />
                                 <YAxis type="category" dataKey="name" width={120} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                                <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }} />
+                                <Tooltip
+                                    contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0' }}
+                                    itemStyle={{ color: '#e2e8f0' }}
+                                    labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                                />
                                 <Bar dataKey="overallScore" radius={[0, 4, 4, 0]} name="Score">
                                     {top5.map((e, i) => <Cell key={i} fill={['#6366f1', '#818cf8', '#10b981', '#34d399', '#f59e0b'][i]} />)}
                                 </Bar>
@@ -522,17 +540,20 @@ function AnalyticsView({ hospitals }) {
         hospitals.reduce((a, h) => { a[h.state] = (a[h.state] || 0) + 1; return a }, {})
     ).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name: name.length > 12 ? name.slice(0, 10) + '...' : name, count }))
 
-    const factorRadarData = Object.keys(FACTOR_LABELS).map(key => ({
-        // Use a short, unique label for the radar axis
-        factor: key === 'patient_outcomes' ? 'Outcomes' :
-            key === 'patient_satisfaction' ? 'Satisfaction' :
-                key === 'staff_quality' ? 'Staff' :
-                    key === 'financial_health' ? 'Financial' :
-                        key === 'accreditation' ? 'Accred' :
-                            FACTOR_LABELS[key],
-        avg: hospitals.length ? Math.round(hospitals.reduce((s, h) => s + (h.categoryScores?.[key] || 0), 0) / hospitals.length) : 0,
-        top10: hospitals.slice(0, 10).length ? Math.round(hospitals.slice(0, 10).reduce((s, h) => s + (h.categoryScores?.[key] || 0), 0) / 10) : 0,
-    }))
+    const factorRadarData = Object.keys(FACTOR_LABELS).map(key => {
+        const top10Slice = hospitals.slice(0, 10);
+        return {
+            // Use a short, unique label for the radar axis
+            factor: key === 'patient_outcomes' ? 'Outcomes' :
+                key === 'patient_satisfaction' ? 'Satisfaction' :
+                    key === 'staff_quality' ? 'Staff' :
+                        key === 'financial_health' ? 'Financial' :
+                            key === 'accreditation' ? 'Accred' :
+                                FACTOR_LABELS[key],
+            avg: hospitals.length ? Math.round(hospitals.reduce((s, h) => s + (h.categoryScores?.[key] || 0), 0) / hospitals.length) : 0,
+            top10: top10Slice.length ? Math.round(top10Slice.reduce((s, h) => s + (h.categoryScores?.[key] || 0), 0) / top10Slice.length) : 0,
+        };
+    })
 
     // Flatten categoryScores into top-level keys for Recharts stacked bar (dot-notation dataKey doesn't work on nested objects)
     const top20flat = hospitals.slice(0, 20).map(h => ({
@@ -563,7 +584,15 @@ function AnalyticsView({ hospitals }) {
         { name: 'IoT', count: hospitals.filter(h => h.iot_monitoring).length },
     ]
 
-    const TOOLTIP_STYLE = { background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0', fontSize: 12 }
+    const TOOLTIP_STYLE = {
+        background: '#0d1526',
+        border: '1px solid rgba(255,255,255,.1)',
+        borderRadius: '8px',
+        color: '#e2e8f0',
+        fontSize: 12,
+        itemStyle: { color: '#e2e8f0' },
+        labelStyle: { color: '#94a3b8', fontWeight: 'bold' }
+    }
 
     return (
         <div className="analytics-view animate-in">
@@ -579,7 +608,11 @@ function AnalyticsView({ hospitals }) {
                             <Radar name="All Hospitals" dataKey="avg" stroke="#818cf8" strokeWidth={4} fill="#6366f1" fillOpacity={0.6} />
                             <Radar name="Top 10" dataKey="top10" stroke="#34d399" strokeWidth={4} fill="#10b981" fillOpacity={0.6} />
                             <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8' }} />
-                            <Tooltip contentStyle={TOOLTIP_STYLE} />
+                            <Tooltip
+                                contentStyle={TOOLTIP_STYLE}
+                                itemStyle={TOOLTIP_STYLE.itemStyle}
+                                labelStyle={TOOLTIP_STYLE.labelStyle}
+                            />
                         </RadarChart>
                     </ResponsiveContainer>
                 </div>
@@ -590,7 +623,11 @@ function AnalyticsView({ hospitals }) {
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                             <XAxis dataKey="range" tick={{ fill: '#94a3b8', fontSize: 11 }} />
                             <YAxis tick={{ fill: '#64748b', fontSize: 11 }} />
-                            <Tooltip contentStyle={TOOLTIP_STYLE} />
+                            <Tooltip
+                                contentStyle={TOOLTIP_STYLE}
+                                itemStyle={TOOLTIP_STYLE.itemStyle}
+                                labelStyle={TOOLTIP_STYLE.labelStyle}
+                            />
                             <Bar dataKey="count" name="Hospitals" radius={[6, 6, 0, 0]}>
                                 {scoreDistribution.map((e, i) => <Cell key={i} fill={['#6366f1', '#10b981', '#f59e0b', '#f97316', '#ef4444'][i]} />)}
                             </Bar>
@@ -621,7 +658,11 @@ function AnalyticsView({ hospitals }) {
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                             <XAxis type="number" tick={{ fill: '#94a3b8', fontSize: 11 }} />
                             <YAxis type="category" dataKey="name" width={90} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                            <Tooltip contentStyle={TOOLTIP_STYLE} />
+                            <Tooltip
+                                contentStyle={TOOLTIP_STYLE}
+                                itemStyle={TOOLTIP_STYLE.itemStyle}
+                                labelStyle={TOOLTIP_STYLE.labelStyle}
+                            />
                             <Bar dataKey="count" fill="#06b6d4" radius={[0, 4, 4, 0]} name="Count" />
                         </BarChart>
                     </ResponsiveContainer>
@@ -637,7 +678,11 @@ function AnalyticsView({ hospitals }) {
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                             <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                             <YAxis tick={{ fill: '#64748b', fontSize: 11 }} />
-                            <Tooltip contentStyle={TOOLTIP_STYLE} />
+                            <Tooltip
+                                contentStyle={TOOLTIP_STYLE}
+                                itemStyle={TOOLTIP_STYLE.itemStyle}
+                                labelStyle={TOOLTIP_STYLE.labelStyle}
+                            />
                             <Bar dataKey="count" name="Hospitals" radius={[6, 6, 0, 0]}>
                                 {accredData.map((e, i) => <Cell key={i} fill={['#f59e0b', '#6366f1', '#10b981', '#06b6d4'][i]} />)}
                             </Bar>
@@ -651,7 +696,11 @@ function AnalyticsView({ hospitals }) {
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                             <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} />
                             <YAxis tick={{ fill: '#64748b', fontSize: 11 }} />
-                            <Tooltip contentStyle={TOOLTIP_STYLE} />
+                            <Tooltip
+                                contentStyle={TOOLTIP_STYLE}
+                                itemStyle={TOOLTIP_STYLE.itemStyle}
+                                labelStyle={TOOLTIP_STYLE.labelStyle}
+                            />
                             <Bar dataKey="count" name="Hospitals" radius={[6, 6, 0, 0]}>
                                 {techData.map((e, i) => <Cell key={i} fill={['#8b5cf6', '#06b6d4', '#f97316', '#6366f1', '#10b981'][i]} />)}
                             </Bar>
@@ -662,10 +711,23 @@ function AnalyticsView({ hospitals }) {
                     <h3 className="chart-title">🏥 Hospital Type Mix</h3>
                     <ResponsiveContainer width="100%" height={220}>
                         <PieChart>
-                            <Pie data={typeDistData} cx="50%" cy="50%" outerRadius={85} paddingAngle={3} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine>
+                            <Pie
+                                data={typeDistData}
+                                cx="50%"
+                                cy="50%"
+                                outerRadius={85}
+                                paddingAngle={3}
+                                dataKey="value"
+                                label={{ fill: '#e2e8f0', fontSize: 10 }}
+                                labelLine
+                            >
                                 {typeDistData.map((e, i) => <Cell key={i} fill={e.color} />)}
                             </Pie>
-                            <Tooltip contentStyle={TOOLTIP_STYLE} />
+                            <Tooltip
+                                contentStyle={TOOLTIP_STYLE}
+                                itemStyle={TOOLTIP_STYLE.itemStyle}
+                                labelStyle={TOOLTIP_STYLE.labelStyle}
+                            />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
@@ -679,7 +741,11 @@ function AnalyticsView({ hospitals }) {
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                         <XAxis dataKey="name" tick={{ fill: '#64748b', fontSize: 9, angle: -40, textAnchor: 'end' }} interval={0} />
                         <YAxis domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 11 }} />
-                        <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0', fontSize: 11 }} />
+                        <Tooltip
+                            contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0', fontSize: 11 }}
+                            itemStyle={{ color: '#e2e8f0' }}
+                            labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                        />
                         <Legend wrapperStyle={{ paddingTop: 20, fontSize: 11, color: '#94a3b8' }} />
                         {Object.keys(FACTOR_LABELS).map(k => (
                             <Bar key={k} dataKey={k} name={FACTOR_LABELS[k]} stackId="a" fill={FACTOR_COLORS[k]} />
@@ -693,14 +759,14 @@ function AnalyticsView({ hospitals }) {
 
 function ScatterTip({ active, payload }) {
     if (!active || !payload?.length) return null
-    const d = payload[0]?.payload || {}
+    const d = payload[0].payload
     return (
-        <div style={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#e2e8f0' }}>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>{d.name}</div>
-            <div>Outcomes: {d.x?.toFixed(1)}</div>
-            <div>Satisfaction: {d.y?.toFixed(1)}</div>
-            <div>Beds: {d.z}</div>
-            <div>Score: <b>{d.score}</b></div>
+        <div className="chart-tooltip" style={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', padding: 10, color: '#e2e8f0', fontSize: 12 }}>
+            <div style={{ color: '#6366f1', fontWeight: 'bold', marginBottom: 5 }}>{d.name}</div>
+            <div>Outcomes: <b>{d.x}</b></div>
+            <div>Satisfaction: <b>{d.y}</b></div>
+            <div>Beds: <b>{d.z}</b></div>
+            <div style={{ marginTop: 5, paddingTop: 5, borderTop: '1px solid rgba(255,255,255,.1)' }}>Score: <b>{d.score}</b></div>
         </div>
     )
 }
@@ -743,7 +809,15 @@ function CompareView({ hospitals, compareList, setCompareList }) {
         return point
     })
 
-    const TOOLTIP_STYLE = { background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0', fontSize: 12 }
+    const TOOLTIP_STYLE = {
+        background: '#0d1526',
+        border: '1px solid rgba(255,255,255,.1)',
+        borderRadius: '8px',
+        color: '#e2e8f0',
+        fontSize: 12,
+        itemStyle: { color: '#e2e8f0' },
+        labelStyle: { color: '#94a3b8', fontWeight: 'bold' }
+    }
 
     return (
         <div className="compare-view animate-in">
@@ -778,7 +852,11 @@ function CompareView({ hospitals, compareList, setCompareList }) {
                             <Radar key={h._id} name={h.name} dataKey={h._id} stroke={COLORS[i]} strokeWidth={4} fill={COLORS[i]} fillOpacity={0.5} />
                         ))}
                         <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8' }} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE} />
+                        <Tooltip
+                            contentStyle={TOOLTIP_STYLE}
+                            itemStyle={TOOLTIP_STYLE.itemStyle}
+                            labelStyle={TOOLTIP_STYLE.labelStyle}
+                        />
                     </RadarChart>
                 </ResponsiveContainer>
             </div>
@@ -791,7 +869,11 @@ function CompareView({ hospitals, compareList, setCompareList }) {
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,.05)" />
                         <XAxis dataKey="factor" tick={{ fill: '#64748b', fontSize: 9, angle: -30, textAnchor: 'end' }} interval={0} />
                         <YAxis domain={[0, 100]} tick={{ fill: '#64748b', fontSize: 11 }} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE} />
+                        <Tooltip
+                            contentStyle={TOOLTIP_STYLE}
+                            itemStyle={TOOLTIP_STYLE.itemStyle}
+                            labelStyle={TOOLTIP_STYLE.labelStyle}
+                        />
                         <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8', paddingTop: 16 }} />
                         {selected.map((h, i) => <Bar key={h._id} dataKey={h.name} fill={COLORS[i]} radius={[3, 3, 0, 0]} />)}
                     </BarChart>
@@ -887,7 +969,12 @@ function WeightsView({ weights, factors, onWeightChange, onSave, onPreset }) {
                         <Pie data={factors.map(f => ({ name: f.label, value: weights[f.key] || 0, color: f.color }))} cx="50%" cy="50%" outerRadius={90} innerRadius={45} paddingAngle={3} dataKey="value">
                             {factors.map((f, i) => <Cell key={i} fill={f.color} />)}
                         </Pie>
-                        <Tooltip contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0', fontSize: 12 }} formatter={(v) => `${v}%`} />
+                        <Tooltip
+                            contentStyle={{ background: '#0d1526', border: '1px solid rgba(255,255,255,.1)', borderRadius: '8px', color: '#e2e8f0', fontSize: 12 }}
+                            itemStyle={{ color: '#e2e8f0' }}
+                            labelStyle={{ color: '#94a3b8', fontWeight: 'bold' }}
+                            formatter={(v) => `${v}%`}
+                        />
                         <Legend wrapperStyle={{ fontSize: 12, color: '#94a3b8' }} />
                     </PieChart>
                 </ResponsiveContainer>
