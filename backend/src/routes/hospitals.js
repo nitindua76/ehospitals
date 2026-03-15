@@ -2,6 +2,60 @@ const express = require('express');
 const router = express.Router();
 const Hospital = require('../models/Hospital');
 const auth = require('../middleware/auth');
+const mongoose = require('mongoose');
+
+// GET /api/hospitals/files/:id — Admin: download file from GridFS
+router.get('/files/:id', auth, async (req, res) => {
+    try {
+        const fileId = new mongoose.Types.ObjectId(req.params.id);
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+            bucketName: 'uploads'
+        });
+
+        // Check if file exists
+        const files = await mongoose.connection.db.collection('uploads.files').find({ _id: fileId }).toArray();
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        const file = files[0];
+        res.set('Content-Type', file.contentType || 'application/octet-stream');
+        res.set('Content-Disposition', `attachment; filename="${file.metadata?.originalName || file.filename}"`);
+
+        const downloadStream = bucket.openDownloadStream(fileId);
+        downloadStream.pipe(res);
+    } catch (err) {
+        res.status(400).json({ error: 'Invalid file ID or error downloading' });
+    }
+});
+
+// GET /api/hospitals/:id/documents/:key — Admin: download a specific hospital document
+router.get('/:id/documents/:key', auth, async (req, res) => {
+    try {
+        const hospital = await Hospital.findById(req.params.id);
+        if (!hospital) return res.status(404).json({ error: 'Hospital not found' });
+
+        const key = req.params.key;
+        const fileId = hospital.attachments?.[key];
+        if (!fileId) return res.status(404).json({ error: 'Document not found' });
+
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+            bucketName: 'uploads'
+        });
+
+        const files = await mongoose.connection.db.collection('uploads.files').find({ _id: fileId }).toArray();
+        if (!files || files.length === 0) return res.status(404).json({ error: 'File data missing in storage' });
+
+        const file = files[0];
+        res.set('Content-Type', file.contentType || 'application/pdf');
+        res.set('Content-Disposition', `attachment; filename="${file.metadata?.originalName || file.filename}"`);
+
+        bucket.openDownloadStream(fileId).pipe(res);
+    } catch (err) {
+        console.error(`❌ Download Error: ${err.message}`);
+        res.status(500).json({ error: 'Error processing download' });
+    }
+});
 
 // POST /api/hospitals — Hospital submits data (public)
 router.post('/', async (req, res) => {

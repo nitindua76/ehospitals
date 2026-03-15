@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 
 const app = express();
 app.set('trust proxy', 1); // Trust Render proxy for rate limiting
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/hospital_selection';
 
 // Security & Middleware
+app.use(morgan('dev')); // Log requests to console
 app.use(helmet());
 app.use(cors({
     origin: (origin, callback) => {
@@ -80,7 +82,7 @@ app.listen(PORT, () => {
 // Connect to MongoDB in the background
 mongoose.connect(MONGO_URI)
     .then(async () => {
-        console.log('✅ MongoDB connected');
+        console.log('✅ MongoDB connected to:', MONGO_URI.split('@').pop()); // Log host for debugging
 
         // Auto-seed if DB is empty
         const Admin = require('./models/Admin');

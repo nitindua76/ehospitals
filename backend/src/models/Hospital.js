@@ -16,7 +16,8 @@ const hospitalSchema = new mongoose.Schema({
   msme_status: { type: String, enum: ['Yes', 'No'], default: 'No' },
   msme_type: { type: String, enum: ['Micro', 'Small', 'Medium', 'None'], default: 'None' },
   msme_attached: { type: Boolean, default: false },
-  type: { type: String, enum: ['Single Specialty', 'Multi-Specialty'], required: true },
+  type: { type: String, enum: ['Single-Specialty', 'Multi-Specialty', 'Eye-Bank', 'Diagnostic-Center'], required: true },
+  ownership_type: { type: String, enum: ['Government', 'Private', 'Trust', 'Corporate'], default: 'Private' },
 
   // SECTION B: ADDRESS & CONTACT DETAILS
   // SECTION B: ADDRESS & CONTACT DETAILS
@@ -54,6 +55,10 @@ const hospitalSchema = new mongoose.Schema({
     lift_safety: { type: Boolean, default: false },
     cea_registration: { type: Boolean, default: false }
   },
+  fire_safety_attached: { type: Boolean, default: false },
+  biomedical_attached: { type: Boolean, default: false },
+  pharmacy_attached: { type: Boolean, default: false },
+  tariff_attached: { type: Boolean, default: false },
 
   // SECTION D: CLINICAL SERVICES
   specialties: [{ type: String }], // Searchable list from user request
@@ -80,8 +85,8 @@ const hospitalSchema = new mongoose.Schema({
   ambulance_facility: { type: String, enum: ['Yes', 'No'], default: 'No' },
   ambulance_free_pickup: { type: String, enum: ['Yes', 'No'], default: 'No' },
   diagnostic_facilities: {
-    ct: { type: String, enum: ['Yes', 'No'], default: 'No' },
-    mri: { type: String, enum: ['Yes', 'No'], default: 'No' },
+    ct: { type: String, enum: ['Yes', 'No', 'No Scan', 'Single-Slice', 'Multi-Slice'], default: 'No' },
+    mri: { type: String, enum: ['Yes', 'No', 'No MRI', '0.5 Tesla', '1.5 Tesla', '3.0 Tesla'], default: 'No' },
     pet_ct: { type: String, enum: ['Yes', 'No'], default: 'No' },
     outsourced_info: String
   },
@@ -94,8 +99,7 @@ const hospitalSchema = new mongoose.Schema({
     icu: { type: Number, default: 0 },
     hdu: { type: Number, default: 0 }
   },
-  total_beds: { type: Number, required: true },
-  tariffs_attached: { type: Boolean, default: false },
+  total_beds: { type: Number, default: 0 },
 
   // SECTION G: SUPPORT SERVICES (Duplicate fields merged with facilities)
   pathology_lab: { type: String, enum: ['Yes', 'No'], default: 'No' },
@@ -130,6 +134,10 @@ const hospitalSchema = new mongoose.Schema({
   }],
   paramedical_staff_count: { type: Number, default: 0 },
   support_staff_count: { type: Number, default: 0 },
+  total_doctors: { type: Number, default: 0 },
+  full_time_doctors: { type: Number, default: 0 },
+  total_nursing_staff: { type: Number, default: 0 },
+  full_time_nursing_staff: { type: Number, default: 0 },
   patient_feedbacks_attached: { type: Boolean, default: false },
 
   // SECTION K: OTHER FACILITIES
@@ -164,7 +172,40 @@ const hospitalSchema = new mongoose.Schema({
   has_submitted: { type: Boolean, default: false }, // locked after first form submit
   current_step: { type: Number, default: 1 },
   submitted_at: { type: Date }
-}, { timestamps: true });
+}, { 
+  timestamps: true
+});
+
+// Ensure virtuals are included in JSON and Object outputs
+hospitalSchema.set('toJSON', { virtuals: true });
+hospitalSchema.set('toObject', { virtuals: true });
+
+// --- VIRTUALS FOR FRONTEND COMPATIBILITY (Flat field support) ---
+hospitalSchema.virtual('nabh_accredited').get(function() { return this.accreditations?.nabh ? 'Yes' : 'No'; });
+hospitalSchema.virtual('nabl_accredited').get(function() { return this.accreditations?.nabl ? 'Yes' : 'No'; });
+hospitalSchema.virtual('jci_accredited').get(function() { return this.accreditations?.jci ? 'Yes' : 'No'; });
+
+hospitalSchema.virtual('fire_safety_clearance').get(function() { return this.statutory_clearances?.fire_safety ? 'Yes' : 'No'; });
+hospitalSchema.virtual('biomedical_waste_clearance').get(function() { return this.statutory_clearances?.biomedical_waste ? 'Yes' : 'No'; });
+hospitalSchema.virtual('aerb_approval').get(function() { return this.statutory_clearances?.aerb_approval ? 'Yes' : 'No'; });
+hospitalSchema.virtual('pharmacy_license').get(function() { return this.statutory_clearances?.pharmacy_license ? 'Yes' : 'No'; });
+hospitalSchema.virtual('lift_safety_clearance').get(function() { return this.statutory_clearances?.lift_safety ? 'Yes' : 'No'; });
+hospitalSchema.virtual('cea_registration').get(function() { return this.statutory_clearances?.cea_registration ? 'Yes' : 'No'; });
+
+hospitalSchema.virtual('emergency_department').get(function() { return this.facilities?.emergency ? 'Yes' : 'No'; });
+hospitalSchema.virtual('blood_bank').get(function() { return this.facilities?.blood_bank ? 'Yes' : 'No'; });
+hospitalSchema.virtual('cathlab').get(function() { return this.facilities?.cathlab ? 'Yes' : 'No'; });
+hospitalSchema.virtual('organ_transplant').get(function() { return this.facilities?.organ_transplant ? 'Yes' : 'No'; });
+hospitalSchema.virtual('dialysis_unit').get(function() { return this.facilities?.dialysis ? 'Yes' : 'No'; });
+hospitalSchema.virtual('opd_services').get(function() { return this.specialties?.length > 0 ? 'Yes' : 'No'; });
+hospitalSchema.virtual('ipd_services').get(function() { return this.total_beds > 0 ? 'Yes' : 'No'; });
+
+hospitalSchema.virtual('ct_scan').get(function() { return this.diagnostic_facilities?.ct; });
+hospitalSchema.virtual('mri_scan').get(function() { return this.diagnostic_facilities?.mri; });
+hospitalSchema.virtual('pet_ct_scan').get(function() { return this.diagnostic_facilities?.pet_ct; });
+
+hospitalSchema.virtual('tariffs_attached').get(function() { return this.tariff_attached ? 'Yes' : 'No'; });
+hospitalSchema.virtual('ongc_association').get(function() { return this.ongc_association_years > 0 ? 'Yes' : 'No'; });
 
 // Hash password before saving
 hospitalSchema.pre('save', async function (next) {

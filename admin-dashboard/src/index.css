@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
 
 *,
 *::before,
@@ -9,34 +9,39 @@
 }
 
 :root {
-    --primary: #6366f1;
-    --primary-dark: #4f46e5;
-    --primary-light: rgba(99, 102, 241, 0.15);
-    --primary-glow: rgba(99, 102, 241, 0.25);
-    --secondary: #06b6d4;
-    --success: #10b981;
-    --success-glow: rgba(16, 185, 129, 0.2);
-    --warning: #f59e0b;
-    --error: #ef4444;
-    --bg: #060d18;
-    --bg-card: rgba(12, 20, 38, 0.95);
-    --bg-card-hover: rgba(16, 26, 48, 0.98);
-    --bg-sidebar: #080e1c;
-    --bg-sidebar-active: rgba(99, 102, 241, 0.12);
-    --border: rgba(255, 255, 255, 0.07);
-    --border-hover: rgba(99, 102, 241, 0.5);
-    --border-active: rgba(99, 102, 241, 0.7);
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #475569;
-    --radius: 14px;
-    --radius-sm: 8px;
-    --gold: #fbbf24;
-    --silver: #94a3b8;
-    --bronze: #d97706;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 24px rgba(99, 102, 241, 0.15);
+    /* Base Colors (HSL) */
+    --h-indigo: 239;
+    --h-teal: 187;
+    --h-emerald: 161;
+    --h-amber: 38;
+    --h-rose: 350;
+
+    --primary: hsl(var(--h-indigo), 84%, 67%);
+    --primary-dark: hsl(var(--h-indigo), 78%, 59%);
+    --primary-light: hsla(var(--h-indigo), 84%, 67%, 0.15);
+    --secondary: hsl(var(--h-teal), 94%, 43%);
+    --success: hsl(var(--h-emerald), 84%, 39%);
+    --warning: hsl(var(--h-amber), 94%, 50%);
+    --error: hsl(var(--h-rose), 84%, 60%);
+
+    --bg: #030712;
+    --bg-card: hsla(222, 47%, 11%, 0.7);
+    --bg-sidebar: hsla(222, 47%, 7%, 0.9);
+    --border: hsla(0, 0%, 100%, 0.08);
+    --border-hover: hsla(var(--h-indigo), 84%, 67%, 0.4);
+
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+
+    --radius: 18px;
+    --radius-sm: 10px;
+
+    --font-ui: 'Inter', sans-serif;
+    --font-heading: 'Outfit', sans-serif;
+
+    --glass: blur(16px);
+    --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
 html {
@@ -44,11 +49,12 @@ html {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-ui);
     background: var(--bg);
     background-image:
-        radial-gradient(ellipse at 20% 10%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 50%);
+        radial-gradient(circle at 0% 0%, hsla(var(--h-indigo), 80%, 20%, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 100% 0%, hsla(var(--h-teal), 80%, 20%, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 50% 100%, hsla(var(--h-indigo), 60%, 10%, 0.1) 0%, transparent 50%);
     background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
