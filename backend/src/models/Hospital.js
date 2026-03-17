@@ -82,7 +82,7 @@ const hospitalSchema = new mongoose.Schema({
     picu: { type: Boolean, default: false },
     central_oxygen: { type: Boolean, default: false }
   },
-  ambulance_facility: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  ambulance_facility: { type: String, enum: ['Yes', 'No', 'Basic', 'ALS'], default: 'No' },
   ambulance_free_pickup: { type: String, enum: ['Yes', 'No'], default: 'No' },
   diagnostic_facilities: {
     ct: { type: String, enum: ['Yes', 'No', 'No Scan', 'Single-Slice', 'Multi-Slice'], default: 'No' },

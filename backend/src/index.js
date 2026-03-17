@@ -19,6 +19,9 @@ app.use(cors({
         const envAllowed = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
         const allowed = [
             'http://localhost:3000', 'http://localhost:3001',
+            'http://localhost', 'http://localhost:8080',
+            'http://ehospitals.ddns.net', 'https://ehospitals.ddns.net',
+            'http://ehospitals.ddns.net:8080', 'https://ehospitals.ddns.net:8080',
             'http://hospital-portal:80', 'http://admin-dashboard:80',
             'https://hospital-portal-beta.vercel.app',
             'https://hospital-empanelment.vercel.app',

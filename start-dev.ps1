@@ -30,6 +30,13 @@ if (Test-Path ".env") {
 
 # 2. Database
 Write-Host "Checking MongoDB Container..."
+
+# Stop production mongo if it's running to avoid port conflict
+if (docker ps -q -f name=hospital_mongodb) {
+    Write-Host "Stopping conflicting production MongoDB container (hospital_mongodb)..." -ForegroundColor Yellow
+    docker stop hospital_mongodb > $null
+}
+
 docker run -d -p 27017:27017 --name hospital_mongo_dev --restart unless-stopped mongo:7 2>$null
 if ($LASTEXITCODE -ne 0) {
     docker start hospital_mongo_dev 2>$null
