@@ -1,4 +1,19 @@
 services:
+  # 1. NGINX PROXY MANAGER (The Secure Front Door)
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: nginx_proxy_manager
+    restart: unless-stopped
+    ports:
+      - "80:80" # Let's Encrypt validation & HTTP traffic
+      - "443:443" # HTTPS secure traffic
+      - "81:81" # NPM Admin Dashboard (accessed via localhost:81)
+    volumes:
+      - ./npm_data:/data
+      - ./npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - hospital_network
+
   mongodb:
     image: mongo:7
     container_name: hospital_mongodb
@@ -17,7 +32,7 @@ services:
     container_name: hospital_backend
     restart: unless-stopped
     ports:
-      - "5500:5000"
+      - "5500:5000" # Left open for your local API testing
     env_file:
       - .env
     depends_on:
@@ -32,8 +47,9 @@ services:
       dockerfile: Dockerfile
     container_name: hospital_portal
     restart: unless-stopped
-    ports:
-      - "80:80"
+    # Public ports removed! NPM will route traffic internally to port 80
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:
@@ -45,8 +61,9 @@ services:
       dockerfile: Dockerfile
     container_name: hospital_admin
     restart: unless-stopped
-    ports:
-      - "8080:80"
+    # Public ports removed! NPM will route traffic internally to port 80
+    expose:
+      - "80"
     depends_on:
       - backend
     networks:

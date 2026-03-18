@@ -32,3 +32,6 @@ Thumbs.db
 
 # Docker Data (local persistent volumes)
 mongo_data/
+npm_data/
+npm_letsencrypt/
+
