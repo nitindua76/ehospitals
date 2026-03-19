@@ -41,7 +41,7 @@ export function RankingView({
                             <th>Category</th>
                             <th>Capacity</th>
                             <th>Score</th>
-                            <th>Compliance</th>
+                            <th>Statutory Compliance</th>
                             <th>Actions</th>
                         </tr>
                     </thead>

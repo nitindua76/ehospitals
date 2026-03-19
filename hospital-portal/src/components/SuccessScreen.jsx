@@ -1,9 +1,27 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { CheckCircle2, Home, FileText, BadgeCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, Home, FileText, BadgeCheck, Download } from 'lucide-react';
+import { generateHospitalPDF } from '../utils/pdfGenerator';
 
-export function SuccessScreen({ data, onReset }) {
+export function SuccessScreen({ data, form, attachedFiles, onReset, token, loading }) {
     const referenceId = data?.hospital?._id || data?.id || 'EMP-2026-XP92';
+    const [downloadProgress, setDownloadProgress] = useState(0);
+
+    const handleDownload = async () => {
+        if (!form) {
+            alert("Application data not found for PDF generation.");
+            return;
+        }
+        const API_URL = import.meta.env.VITE_API_URL || '/api';
+        setDownloadProgress(1);
+        try {
+            await generateHospitalPDF(form, referenceId, attachedFiles, token, API_URL, (p) => {
+                setDownloadProgress(p);
+            });
+        } finally {
+            setTimeout(() => setDownloadProgress(0), 1500);
+        }
+    };
 
     return (
         <div className="success-overlay">
@@ -54,31 +72,65 @@ export function SuccessScreen({ data, onReset }) {
                     </motion.div>
 
                     <div className="next-steps-modern">
-                        <h3>What's Next?</h3>
-                        <div className="steps-list">
-                            <div className="modern-step-item completed">
-                                <div className="step-dot"><CheckCircle2 size={14} /></div>
-                                <span>Application Received</span>
-                            </div>
-                            <div className="modern-step-item pending">
-                                <div className="step-dot" />
-                                <span>Document Verification</span>
-                            </div>
-                            <div className="modern-step-item pending">
-                                <div className="step-dot" />
-                                <span>Clinical Assessment</span>
-                            </div>
+                        <h3>Mandatory Final Step</h3>
+                        <div className="physical-submission-alert">
+                            <CheckCircle2 size={16} />
+                            <p>Please download the final application PDF below, <strong>physically sign and stamp all pages</strong>, and submit the hard copy to the office for final approval.</p>
                         </div>
                     </div>
 
                     <div className="success-action-group">
-                        <button className="btn-premium-primary" onClick={onReset}>
-                            <Home size={16} />
-                            <span>Return to Dashboard</span>
+                        <button 
+                            className="btn-premium primary success" 
+                            onClick={handleDownload}
+                            disabled={loading || !form?.name}
+                        >
+                            {loading ? (
+                                <>
+                                    <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                                    >
+                                        <Download size={16} />
+                                    </motion.div>
+                                    <span>Syncing Records...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Download size={16} />
+                                    <span>Download Signed Application</span>
+                                </>
+                            )}
                         </button>
-                        <button className="btn-premium-ghost">
-                            <FileText size={16} />
-                            <span>Download Receipt</span>
+
+                        <AnimatePresence>
+                            {downloadProgress > 0 && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="download-progress-container"
+                                    style={{ width: '100%', marginTop: '1rem' }}
+                                >
+                                    <div className="progress-label" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+                                        <span>Merging Documents...</span>
+                                        <span>{downloadProgress}%</span>
+                                    </div>
+                                    <div className="progress-track" style={{ height: '8px', background: 'rgba(52, 152, 219, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <motion.div 
+                                            className="progress-fill"
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${downloadProgress}%` }}
+                                            style={{ height: '100%', background: 'linear-gradient(90deg, #3498db, #2ecc71)', borderRadius: '4px' }}
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <button className="btn-premium-ghost" onClick={onReset}>
+                            <Home size={16} />
+                            <span>Log Out</span>
                         </button>
                     </div>
                 </div>

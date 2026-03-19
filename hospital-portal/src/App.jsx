@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Send, Loader2, ChevronDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Send, Loader2, ChevronDown, AlertCircle } from 'lucide-react'
 
 import './index.css'
 import './App.css'
@@ -11,36 +11,43 @@ import { Stepper } from './components/Stepper'
 import { StepContent } from './components/StepContent'
 import { SuccessScreen } from './components/SuccessScreen'
 import { HospitalLoginScreen } from './components/HospitalLoginScreen'
+import { WelcomeScreen } from './components/WelcomeScreen'
 
 const API = import.meta.env.VITE_API_URL || '/api'
 
 const STEPS = [
-    { id: 1, label: 'A: Basic Details', icon: '🏥' },
-    { id: 2, label: 'B: Address & Nodal', icon: '📍' },
-    { id: 3, label: 'C: Compliance', icon: '📜' },
-    { id: 4, label: 'D: Clinical Services', icon: '👩‍⚕️' },
-    { id: 5, label: 'E: Facilities', icon: '🏢' },
-    { id: 6, label: 'F: Capacity', icon: '🛏️' },
-    { id: 7, label: 'G: Support Services', icon: '🤝' },
-    { id: 8, label: 'H: Commercials', icon: '💰' },
-    { id: 9, label: 'I: Experience', icon: '📅' },
-    { id: 10, label: 'J: Manpower', icon: '👥' },
-    { id: 11, label: 'K: Other Info', icon: '💡' },
-    { id: 12, label: 'L: Declaration', icon: '✅' },
-    { id: 13, label: 'M: Documents', icon: '📎' },
-    { id: 14, label: 'Review', icon: '🔍' },
-]
+    { id: 1, label: 'A: Basic Details', icon: '🏥', group: 'Organizational Profile' },
+    { id: 2, label: 'B: Address & Nodal', icon: '📍', group: 'Organizational Profile' },
+    { id: 3, label: 'C: Statutory Compliance', icon: '📜', group: 'Compliance & Quality' },
+    { id: 4, label: 'D: Clinical Services', icon: '👩‍⚕️', group: 'Clinical Capabilities' },
+    { id: 9, label: 'E: Clinical Specialties', icon: '🔍', group: 'Clinical Capabilities' },
+    { id: 5, label: 'F: Facilities', icon: '🏢', group: 'Facilities' },
+    { id: 6, label: 'G: Capacity', icon: '🛏️', group: 'Facilities' },
+    { id: 7, label: 'H: Support Facilities', icon: '🛠️', group: 'Facilities' },
+    { id: 11, label: 'I: General Facilities', icon: '🌟', group: 'Facilities' },
+    { id: 10, label: 'J: Clinical Staff', icon: '👥', group: 'Human Resources' },
+    { id: 8, label: 'K: History & Associations', icon: '🏛️', group: 'Business & History' },
+    { id: 12, label: 'L: Declaration', icon: '✅', group: 'Finalization' },
+    { id: 13, label: 'M: Document Uploads', icon: '📤', group: 'Finalization' },
+    { id: 14, label: 'N: Review & Submit', icon: '📋', group: 'Finalization' }
+];
 
 const defaultForm = {
     name: '', brand_name: '', pan_number: '', gst_number: '', msme_status: 'No', msme_type: 'None', type: 'Multi-Specialty',
-    address: '', city: '', state: '', contact_phone: '', contact_email: '', nodal_contacts: [{ purpose: 'Admission', name: '', mobile: '' }],
-    nabh_accredited: 'No', nabl_accredited: 'No', jci_accredited: 'No', fire_safety_clearance: 'No', biomedical_waste_clearance: 'No', aerb_approval: 'No', pharmacy_license: 'No', lift_safety_clearance: 'No', cea_registration: 'No',
+    address: '', city: '', state: '', contact_phone: '', contact_email: '', nodal_contacts: [{ purpose: 'Billing', name: '', mobile: '', email: '' }, { purpose: 'Emergency', name: '', mobile: '', email: '' }, { purpose: 'Grievance / Feedback', name: '', mobile: '', email: '' }],
+    nabh_accredited: 'No', nabl_accredited: 'No', jci_accredited: 'No', fire_safety_clearance: 'No', biomedical_waste_clearance: 'No', aerb_approval: 'No', pharmacy_license: 'No', lift_safety_clearance: 'No', cea_registration: 'No', pollution_control_certificate: 'No',
     emergency_department: 'No', blood_bank: 'No', cathlab: 'No', organ_transplant: 'No', dialysis_unit: 'No', opd_services: 'No', ipd_services: 'No',
-    ct_scan: 'No Scan', mri_scan: 'No MRI', pet_ct_scan: 'No', digital_xray: 'No', ultrasound: 'No',
+    advanced_trauma_care: 'No', burns_unit: 'No', ipd_psychiatry: 'No', ivf_facility: 'No', ventilator_facility: 'No', nicu_facility: 'No', picu_facility: 'No',
+    central_oxygen_supply: 'No', icu_facility: 'No', trauma_facility: 'No', interventional_radiology: 'No', nuclear_medicine: 'No', physiotherapy: 'No',
+    pain_management: 'No', palliative_care: 'No', air_ambulance_tieup: 'No', hearse_van_tieup: 'No',
+    ct_scan: 'No Scan', mri_scan: 'Not Available', pet_ct_scan: 'Not Available', echo_cardiology: 'No', digital_xray: 'No', ultrasound: 'No',
     specialties: [],
-    capacity: { general: '', semi_private: '', private: '', icu: '', hdu: '' }, total_beds: '', tariffs_attached: 'No',
+    capacity: { general: '', semi_private: '', private: '', private_single_ac: '', private_deluxe_ac: '', private_suite: '', icu: '', hdu: '' }, total_beds: '', tariffs_attached: 'No',
     pathology_lab: 'No', pharmacy_24x7: 'No', trauma_support_24x7: 'No', corporate_help_desk: 'No', ambulance_facility: 'No', ambulance_free_pickup: 'No',
-    cghs_rates_acceptable: 'No', ongc_discount_percent: '', ongc_association: 'No', ongc_association_years: '', ongc_patient_count: { fy_23_24: '', fy_24_25: '' },
+    bank_name: '', account_no: '', ifsc_code: '', ecs_mandate_attached: 'No',
+    date_of_inception: '', panel_organizations: [], tpa_tieups: [],
+    signatory_name: '', signatory_designation: '', signatory_date: '',
+    cghs_rates_acceptable: 'No', ongc_discount_percent: '', ongc_association: 'No', ongc_association_years: '', ongc_patient_count: { fy_22_23: '', fy_23_24: '', fy_24_25: '' },
     total_doctors: '', full_time_doctors: '', total_nursing_staff: '', full_time_nursing_staff: '', clinicians: [{ name: '', specialty: '', experience: '' }],
     general_facilities: { parking: false, power_backup: false, central_ac: false, waiting_lounge: false, cafeteria: false, attendant_lodging: false },
     declaration_no_blacklisting: false, achievements: '',
@@ -55,6 +62,15 @@ export default function App() {
     const [loading, setLoading] = useState(false)
     const [submitted, setSubmitted] = useState(null)
     const [errors, setErrors] = useState({})
+    const [showWelcome, setShowWelcome] = useState(false)
+
+    useEffect(() => {
+        // Show welcome only on the first step for hospitals that haven't submitted
+        if (hospitalAuth && !hospitalAuth.has_submitted && step === 1 && !submitted) {
+            const hasSeen = sessionStorage.getItem('welcome_seen')
+            if (!hasSeen) setShowWelcome(true)
+        }
+    }, [hospitalAuth, step, submitted])
 
     useEffect(() => {
         const savedToken = sessionStorage.getItem('token') || sessionStorage.getItem('hospital_token')
@@ -69,7 +85,7 @@ export default function App() {
     }, [])
 
     useEffect(() => {
-        if (!hospitalAuth || hospitalAuth.has_submitted) return;
+        if (!hospitalAuth) return;
         const loadDraft = async () => {
             setLoading(true)
             try {
@@ -77,10 +93,14 @@ export default function App() {
                     headers: { Authorization: `Bearer ${hospitalAuth.token}` }
                 })
                 if (res.data) {
-                    setForm(f => ({ ...f, ...res.data }))
-                    if (res.data.current_step) {
-                        setStep(res.data.current_step)
-                        setMaxStep(res.data.current_step)
+                    const data = { ...res.data };
+                    if (data.date_of_inception) data.date_of_inception = data.date_of_inception.split('T')[0];
+                    if (data.signatory_date) data.signatory_date = data.signatory_date.split('T')[0];
+                    
+                    setForm(f => ({ ...f, ...data }))
+                    if (data.current_step) {
+                        setStep(data.current_step)
+                        setMaxStep(data.current_step)
                     }
                     if (res.data.attachments && typeof res.data.attachments === 'object') {
                         const reconstructedFiles = {}
@@ -125,11 +145,92 @@ export default function App() {
         setSubmitted(null)
     }
 
-    const validate = (s) => {
+    const getStepErrors = (s, formData, files) => {
         const e = {}
-        if (s === 1 && !form.name.trim()) e.name = 'Hospital name required'
+        if (s === 1) {
+            if (!formData.name?.trim()) e.name = 'Hospital name required'
+            if (!formData.brand_name?.trim()) e.brand_name = 'Brand name required'
+            if (!formData.pan_number?.trim()) e.pan_number = 'PAN number required'
+            if (!formData.gst_number?.trim()) e.gst_number = 'GST number required'
+            if (!formData.type) e.type = 'Please select hospital type'
+            if (!formData.ownership_type) e.ownership_type = 'Please select sector/category'
+            if (!formData.msme_status) e.msme_status = 'Please select MSME status'
+            if (formData.msme_status === 'Yes' && !formData.msme_type?.trim()) e.msme_type = 'MSME Category required'
+        }
+        if (s === 2) {
+            if (!formData.address?.trim()) e.address = 'Address required'
+            if (!formData.city?.trim()) e.city = 'City required'
+            if (!formData.state?.trim()) e.state = 'State required'
+            if (!formData.contact_phone?.trim()) e.contact_phone = 'Phone required'
+            if (!formData.contact_email?.trim()) e.contact_email = 'Email required'
+            
+            // Validate first 3 nodal contacts
+            const nodalErrors = []
+            for (let i = 0; i < 3; i++) {
+                const nc = formData.nodal_contacts?.[i] || {}
+                if (!nc.name?.trim() || !nc.mobile?.trim() || !nc.email?.trim()) {
+                    nodalErrors.push(`Nodal Contact ${i + 1} (${nc.purpose || 'Required'}) Incomplete`)
+                }
+            }
+            if (nodalErrors.length > 0) e.nodal_contacts = nodalErrors[0]
+        }
+        if (s === 8) {
+            if (!formData.date_of_inception) e.date_of_inception = 'Inception date required'
+        }
+        if (s === 12) {
+            if (!formData.declaration_no_blacklisting) e.declaration_no_blacklisting = 'Declaration required'
+            if (!formData.signatory_name?.trim()) e.signatory_name = 'Signatory name required'
+            if (!formData.signatory_designation?.trim()) e.signatory_designation = 'Designation required'
+            if (!formData.signatory_date?.trim()) e.signatory_date = 'Date required'
+        }
+        if (s === 13) {
+            const reqKeys = ['pan', 'gst', 'bank_ecs'];
+            if (formData.msme_status === 'Yes') reqKeys.push('mse_certificate');
+            if (formData.nabh_accredited === 'Yes') reqKeys.push('nabh_certificate');
+            if (formData.nabl_accredited === 'Yes') reqKeys.push('nabl_certificate');
+            if (formData.jci_accredited === 'Yes') reqKeys.push('jci_certificate');
+            if (formData.fire_safety_clearance === 'Yes') reqKeys.push('fire_safety');
+            if (formData.biomedical_waste_clearance === 'Yes') reqKeys.push('biomedical');
+            if (formData.pharmacy_license === 'Yes') reqKeys.push('pharmacy');
+            if (formData.aerb_approval === 'Yes') reqKeys.push('aerb_approval');
+            if (formData.pollution_control_certificate === 'Yes') reqKeys.push('pollution_control');
+            if (formData.lift_safety_clearance === 'Yes') reqKeys.push('lift_safety');
+            if (formData.cea_registration === 'Yes') reqKeys.push('cea_registration');
+            if (formData.mri_scan === 'Outsourced') reqKeys.push('mri_declaration');
+            if (formData.pet_ct_scan === 'Outsourced') reqKeys.push('pet_ct_declaration');
+
+            for (const k of reqKeys) {
+                if (!files[k] || files[k].loading) {
+                    e.uploads = 'All mandatory documents must be uploaded.'
+                    break
+                }
+            }
+        }
+        return e
+    }
+
+    const validate = (s) => {
+        const e = getStepErrors(s, form, attachedFiles)
         setErrors(e)
         return Object.keys(e).length === 0
+    }
+
+    const validateAll = () => {
+        const stepErrors = {}
+        const missing = []
+        for (let i = 0; i < STEPS.length; i++) {
+            const stepId = STEPS[i].id
+            const e = getStepErrors(stepId, form, attachedFiles)
+            if (Object.keys(e).length > 0) {
+                stepErrors[stepId] = true
+                Object.values(e).forEach(msg => {
+                    if (!missing.includes(msg)) missing.push(msg)
+                })
+            } else {
+                stepErrors[stepId] = false
+            }
+        }
+        return { isValid: missing.length === 0, missing, stepErrors }
     }
 
     const saveDraft = async (targetMaxStep) => {
@@ -138,7 +239,7 @@ export default function App() {
                 headers: { Authorization: `Bearer ${hospitalAuth.token}` }
             })
             return true
-        } catch (e) { 
+        } catch (e) {
             console.error('Save failed:', e)
             alert('Progress could not be saved. Please check your connection.')
             return false
@@ -146,7 +247,7 @@ export default function App() {
     }
 
     const next = async () => {
-        if (!validate(step)) return
+        if (!validate(STEPS[step - 1].id)) return
         const n = Math.min(step + 1, STEPS.length)
         const newMax = Math.max(maxStep, n)
         const ok = await saveDraft(newMax)
@@ -186,13 +287,13 @@ export default function App() {
         } finally { setLoading(false) }
     }
 
-    if (submitted) return <><Header hospitalName={hospitalAuth.name} hospitalId={hospitalAuth.hospitalId} onSignOut={signOut} /><SuccessScreen data={submitted} onReset={signOut} /></>
+    if (submitted) return <><Header hospitalName={hospitalAuth.name} hospitalId={hospitalAuth.hospitalId} onSignOut={signOut} /><SuccessScreen loading={loading} data={submitted} form={form} attachedFiles={attachedFiles} token={hospitalAuth.token} onReset={signOut} /></>
 
     if (hospitalAuth.has_submitted && !submitted) {
         return (
             <div className="portal-layout">
                 <Header hospitalName={hospitalAuth.name} hospitalId={hospitalAuth.hospitalId} onSignOut={signOut} />
-                <SuccessScreen data={{ hospital: { _id: hospitalAuth.hospitalId } }} onReset={signOut} />
+                <SuccessScreen data={{ hospital: { _id: hospitalAuth.hospitalId } }} form={form} attachedFiles={attachedFiles} token={hospitalAuth.token} loading={loading} onReset={signOut} />
             </div>
         )
     }
@@ -201,15 +302,19 @@ export default function App() {
 
     return (
         <div className="portal-layout">
+            {showWelcome && <WelcomeScreen onStart={() => {
+                setShowWelcome(false);
+                sessionStorage.setItem('welcome_seen', 'true');
+            }} />}
             <Header hospitalName={hospitalAuth.name} hospitalId={hospitalAuth.hospitalId} onSignOut={signOut} />
 
             <main className="portal-main">
-                <Stepper steps={STEPS} currentStep={step} maxStep={maxStep} onStepClick={stepClickHandler} />
+                <Stepper steps={STEPS} currentStep={step} maxStep={maxStep} onStepClick={stepClickHandler} stepErrors={validateAll().stepErrors} />
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                     {/* Mobile step selector */}
                     <div className="mobile-step-selector">
-                        <button className="step-dropdown-btn" onClick={() => {}}>
+                        <button className="step-dropdown-btn" onClick={() => { }}>
                             <span>{STEPS[step - 1].icon} {STEPS[step - 1].label}</span>
                             <ChevronDown size={16} />
                         </button>
@@ -225,7 +330,8 @@ export default function App() {
                         transition={{ duration: 0.35 }}
                     >
                         <StepContent
-                            step={step}
+                            stepId={STEPS[step - 1].id}
+                            hospitalId={hospitalAuth.hospitalId}
                             form={form}
                             setForm={setForm}
                             errors={errors}
@@ -234,6 +340,8 @@ export default function App() {
                             removeArrayItem={removeArrayItem}
                             attachedFiles={attachedFiles}
                             setAttachedFiles={setAttachedFiles}
+                            validation={validateAll()}
+                            token={hospitalAuth.token}
                         />
 
                         <div className="form-nav-premium">
@@ -245,11 +353,26 @@ export default function App() {
                                 <button className="btn-premium primary" onClick={next}>
                                     Continue <ChevronRight size={16} />
                                 </button>
-                            ) : (
-                                <button className="btn-premium primary success" onClick={submit} disabled={loading}>
-                                    {loading ? <Loader2 className="spinner" size={18} /> : <><Send size={16} /> Submit Application</>}
-                                </button>
-                            )}
+                            ) : (() => {
+                                const { isValid } = validateAll();
+                                return (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                                        {!isValid && (
+                                            <div className="submit-warning" style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--danger)', fontSize: '12px', fontWeight: '700' }}>
+                                                <AlertCircle size={14} />
+                                                <span>Mandatory fields/uploads missing</span>
+                                            </div>
+                                        )}
+                                        <button 
+                                            className={`btn-premium primary success ${!isValid ? 'disabled' : ''}`} 
+                                            onClick={submit} 
+                                            disabled={loading || !isValid}
+                                        >
+                                            {loading ? <Loader2 className="spinner" size={18} /> : <><Send size={16} /> Submit Application</>}
+                                        </button>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </motion.div>
                 </div>

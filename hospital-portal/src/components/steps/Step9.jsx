@@ -8,7 +8,7 @@ export function Step9({ form, setForm }) {
 
     return (
         <StepLayout
-            title="Step I: Clinical Specialties"
+            title="Step E: Clinical Specialties"
             subtitle="Select all specialties available at your hospital."
             icon="🩺"
         >

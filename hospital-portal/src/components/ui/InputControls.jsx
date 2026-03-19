@@ -43,17 +43,19 @@ export function Field({ label, name, type = 'text', form, setForm, min, max, ste
     );
 }
 
-export function Toggle({ label, name, form, setForm, hint }) {
+export function Toggle({ label, name, form, setForm, hint, required, error }) {
     const active = form[name] === 'Yes';
     return (
         <motion.div
-            className="toggle-group"
+            className={`toggle-group ${error ? 'error' : ''}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
         >
             <div className="toggle-header">
-                <span className="form-label">{label}</span>
+                <span className="form-label">
+                    {label} {required && <span className="required">*</span>}
+                </span>
                 <button
                     type="button"
                     className={`toggle-switch ${active ? 'active' : ''}`}
@@ -67,6 +69,7 @@ export function Toggle({ label, name, form, setForm, hint }) {
                 </button>
             </div>
             {hint && <p className="form-hint">{hint}</p>}
+            {error && <p className="error-text">{error}</p>}
         </motion.div>
     );
 }

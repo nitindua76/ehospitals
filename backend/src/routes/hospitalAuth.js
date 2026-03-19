@@ -111,6 +111,7 @@ router.put('/me', hospitalAuth, async (req, res) => {
         if (rawUpdateData.pharmacy_license !== undefined) updateData['statutory_clearances.pharmacy_license'] = toBool(rawUpdateData.pharmacy_license);
         if (rawUpdateData.lift_safety_clearance !== undefined) updateData['statutory_clearances.lift_safety'] = toBool(rawUpdateData.lift_safety_clearance);
         if (rawUpdateData.cea_registration !== undefined) updateData['statutory_clearances.cea_registration'] = toBool(rawUpdateData.cea_registration);
+        if (rawUpdateData.pollution_control_certificate !== undefined) updateData['statutory_clearances.pollution_control_certificate'] = toBool(rawUpdateData.pollution_control_certificate);
 
         // Facilities
         if (rawUpdateData.emergency_department !== undefined) updateData['facilities.emergency'] = toBool(rawUpdateData.emergency_department);
@@ -121,14 +122,54 @@ router.put('/me', hospitalAuth, async (req, res) => {
         if (rawUpdateData.opd_services !== undefined) updateData['facilities.opd'] = toBool(rawUpdateData.opd_services);
         if (rawUpdateData.ipd_services !== undefined) updateData['facilities.ipd'] = toBool(rawUpdateData.ipd_services);
 
+        if (rawUpdateData.advanced_trauma_care !== undefined) updateData['facilities.advanced_trauma'] = toBool(rawUpdateData.advanced_trauma_care);
+        if (rawUpdateData.burns_unit !== undefined) updateData['facilities.burns_unit'] = toBool(rawUpdateData.burns_unit);
+        if (rawUpdateData.ipd_psychiatry !== undefined) updateData['facilities.ipd_psychiatry'] = toBool(rawUpdateData.ipd_psychiatry);
+        if (rawUpdateData.ivf_facility !== undefined) updateData['facilities.ivf'] = toBool(rawUpdateData.ivf_facility);
+        if (rawUpdateData.ventilator_facility !== undefined) updateData['facilities.ventilator'] = toBool(rawUpdateData.ventilator_facility);
+        if (rawUpdateData.nicu_facility !== undefined) updateData['facilities.nicu'] = toBool(rawUpdateData.nicu_facility);
+        if (rawUpdateData.picu_facility !== undefined) updateData['facilities.picu'] = toBool(rawUpdateData.picu_facility);
+        if (rawUpdateData.central_oxygen_supply !== undefined) updateData['facilities.central_oxygen'] = toBool(rawUpdateData.central_oxygen_supply);
+        if (rawUpdateData.icu_facility !== undefined) updateData['facilities.icu'] = toBool(rawUpdateData.icu_facility);
+        if (rawUpdateData.trauma_facility !== undefined) updateData['facilities.trauma'] = toBool(rawUpdateData.trauma_facility);
+        if (rawUpdateData.interventional_radiology !== undefined) updateData['facilities.interventional_radiology'] = toBool(rawUpdateData.interventional_radiology);
+        if (rawUpdateData.nuclear_medicine !== undefined) updateData['facilities.nuclear_medicine'] = toBool(rawUpdateData.nuclear_medicine);
+        if (rawUpdateData.physiotherapy !== undefined) updateData['facilities.physiotherapy'] = toBool(rawUpdateData.physiotherapy);
+        if (rawUpdateData.pain_management !== undefined) updateData['facilities.pain_management'] = toBool(rawUpdateData.pain_management);
+        if (rawUpdateData.palliative_care !== undefined) updateData['facilities.palliative_care'] = toBool(rawUpdateData.palliative_care);
+        if (rawUpdateData.air_ambulance_tieup !== undefined) updateData['facilities.air_ambulance'] = toBool(rawUpdateData.air_ambulance_tieup);
+        if (rawUpdateData.hearse_van_tieup !== undefined) updateData['facilities.hearse_van'] = toBool(rawUpdateData.hearse_van_tieup);
+
         // Diagnostics
         if (rawUpdateData.ct_scan !== undefined) updateData['diagnostic_facilities.ct'] = rawUpdateData.ct_scan;
         if (rawUpdateData.mri_scan !== undefined) updateData['diagnostic_facilities.mri'] = rawUpdateData.mri_scan;
         if (rawUpdateData.pet_ct_scan !== undefined) updateData['diagnostic_facilities.pet_ct'] = rawUpdateData.pet_ct_scan;
+        if (rawUpdateData.echo_cardiology !== undefined) updateData['diagnostic_facilities.echo_cardiology'] = rawUpdateData.echo_cardiology;
+        if (rawUpdateData.digital_xray !== undefined) updateData['diagnostic_facilities.digital_xray'] = toBool(rawUpdateData.digital_xray);
+        if (rawUpdateData.ultrasound !== undefined) updateData['diagnostic_facilities.ultrasound'] = toBool(rawUpdateData.ultrasound);
 
         // Misc
         if (rawUpdateData.tariffs_attached !== undefined) updateData['tariff_attached'] = toBool(rawUpdateData.tariffs_attached);
         if (rawUpdateData.ongc_association_years !== undefined) updateData['ongc_association_years'] = Number(rawUpdateData.ongc_association_years);
+        
+        if (rawUpdateData.date_of_inception) {
+            const inception = new Date(rawUpdateData.date_of_inception);
+            updateData['date_of_inception'] = inception;
+            // Auto-calculate hospital age
+            const age = Math.floor((new Date() - inception) / (1000 * 60 * 60 * 24 * 365.25));
+            updateData['hospital_age'] = age > 0 ? age : 0;
+        }
+
+        // Bank Details
+        if (rawUpdateData.bank_name !== undefined) updateData['bank_details.bank_name'] = rawUpdateData.bank_name;
+        if (rawUpdateData.account_no !== undefined) updateData['bank_details.account_no'] = rawUpdateData.account_no;
+        if (rawUpdateData.ifsc_code !== undefined) updateData['bank_details.ifsc_code'] = rawUpdateData.ifsc_code;
+        if (rawUpdateData.ecs_mandate_attached !== undefined) updateData['bank_details.ecs_mandate_attached'] = toBool(rawUpdateData.ecs_mandate_attached);
+
+        // Signatory
+        if (rawUpdateData.signatory_name !== undefined) updateData['authorized_signatory.name'] = rawUpdateData.signatory_name;
+        if (rawUpdateData.signatory_designation !== undefined) updateData['authorized_signatory.designation'] = rawUpdateData.signatory_designation;
+        if (rawUpdateData.signatory_date !== undefined) updateData['authorized_signatory.date'] = rawUpdateData.signatory_date;
 
         // Manpower Mapping
         if (rawUpdateData.clinicians && Array.isArray(rawUpdateData.clinicians)) {
@@ -160,12 +201,16 @@ router.put('/me', hospitalAuth, async (req, res) => {
         // Handle everything else that is top-level and not mapped
         const handledFlat = [
             'nabh_accredited', 'nabl_accredited', 'jci_accredited',
-            'fire_safety_clearance', 'biomedical_waste_clearance', 'aerb_approval', 'pharmacy_license', 'lift_safety_clearance', 'cea_registration',
+            'fire_safety_clearance', 'biomedical_waste_clearance', 'aerb_approval', 'pharmacy_license', 'lift_safety_clearance', 'cea_registration', 'pollution_control_certificate',
             'emergency_department', 'blood_bank', 'cathlab', 'organ_transplant', 'dialysis_unit', 'opd_services', 'ipd_services',
-            'ct_scan', 'mri_scan', 'pet_ct_scan', 'tariffs_attached', 'capacity', 'ongc_patient_count', 'general_facilities',
-            'clinicians',
+            'advanced_trauma_care', 'burns_unit', 'ipd_psychiatry', 'ivf_facility', 'ventilator_facility', 'nicu_facility', 'picu_facility',
+            'central_oxygen_supply', 'icu_facility', 'trauma_facility', 'interventional_radiology', 'nuclear_medicine', 'physiotherapy',
+            'pain_management', 'palliative_care', 'air_ambulance_tieup', 'hearse_van_tieup',
+            'ct_scan', 'mri_scan', 'pet_ct_scan', 'echo_cardiology', 'digital_xray', 'ultrasound', 'tariffs_attached', 'capacity', 'ongc_patient_count', 'general_facilities',
+            'clinicians', 'bank_name', 'account_no', 'ifsc_code', 'ecs_mandate_attached', 'date_of_inception',
+            'signatory_name', 'signatory_designation', 'signatory_date',
             // Also exclude the structured objects themselves to avoid conflicts
-            'accreditations', 'statutory_clearances', 'facilities', 'diagnostic_facilities', 'consultants'
+            'accreditations', 'statutory_clearances', 'facilities', 'diagnostic_facilities', 'consultants', 'bank_details', 'authorized_signatory'
         ];
 
         Object.keys(rawUpdateData).forEach(key => {
@@ -219,7 +264,8 @@ router.post('/upload', hospitalAuth, upload.single('file'), async (req, res) => 
             metadata: {
                 originalName: req.file.originalname,
                 hospitalId: req.hospital.id,
-                type: field
+                type: field,
+                mimetype: req.file.mimetype
             }
         });
 
@@ -307,6 +353,66 @@ router.post('/submit', hospitalAuth, async (req, res) => {
     } catch (err) {
         console.error(`❌ /submit Error: ${err.message}`);
         res.status(400).json({ error: err.message });
+    }
+});
+
+// POST /api/hospital-auth/remove-upload — Remove an attachment link from hospital document
+router.post('/remove-upload', hospitalAuth, async (req, res) => {
+    try {
+        const { field } = req.body;
+        if (!field) return res.status(400).json({ error: 'Field name required' });
+
+        console.log(`🗑️ /remove-upload: Removing field ${field} for hospital ${req.hospital.id}`);
+
+        // Use $unset to surgically remove the field from the attachments object
+        // This avoids calling .save() and triggering validation on other fields (like nodal_contacts)
+        await Hospital.findByIdAndUpdate(req.hospital.id, {
+            $unset: { [`attachments.${field}`]: "" }
+        });
+
+        res.json({ success: true, message: 'Attachment removed successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// GET /api/hospital-auth/files/:id — Hospital: download own file from GridFS
+router.get('/files/:id', hospitalAuth, async (req, res) => {
+    try {
+        const fileId = new mongoose.Types.ObjectId(req.params.id);
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+            bucketName: 'uploads'
+        });
+
+        // Check if file exists and belongs to this hospital
+        const files = await mongoose.connection.db.collection('uploads.files').find({ 
+            _id: fileId,
+            "metadata.hospitalId": req.hospital.id 
+        }).toArray();
+
+        if (!files || files.length === 0) {
+            return res.status(404).json({ error: 'File not found or access denied' });
+        }
+
+        const file = files[0];
+        let contentType = file.metadata?.mimetype || file.contentType || 'application/octet-stream';
+        
+        // Fallback for older files missing explicit mimetype
+        if (contentType === 'application/octet-stream') {
+            const originalName = file.metadata?.originalName || file.filename || '';
+            if (originalName.match(/\.pdf$/i)) contentType = 'application/pdf';
+            else if (originalName.match(/\.png$/i)) contentType = 'image/png';
+            else if (originalName.match(/\.jpe?g$/i)) contentType = 'image/jpeg';
+        }
+        
+        res.set('Content-Type', contentType);
+        res.set('Content-Disposition', `attachment; filename="${file.metadata?.originalName || file.filename}"`);
+
+        const downloadStream = bucket.openDownloadStream(fileId);
+        downloadStream.pipe(res);
+    } catch (err) {
+        console.error(`❌ Download Error: ${err.message}`);
+        res.status(400).json({ error: 'Invalid file ID or error downloading' });
     }
 });
 

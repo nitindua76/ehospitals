@@ -15,24 +15,24 @@ import { Step13 } from './steps/Step13';
 import { Step14 } from './steps/Step14';
 import { AnimatePresence } from 'framer-motion';
 
-export function StepContent({ step, ...props }) {
+export function StepContent({ stepId, ...props }) {
     return (
         <div className="step-content-container">
             <AnimatePresence mode="wait">
-                {step === 1 && <Step1 key="s1" {...props} />}
-                {step === 2 && <Step2 key="s2" {...props} />}
-                {step === 3 && <Step3 key="s3" {...props} />}
-                {step === 4 && <Step4 key="s4" {...props} />}
-                {step === 5 && <Step5 key="s5" {...props} />}
-                {step === 6 && <Step6 key="s6" {...props} />}
-                {step === 7 && <Step7 key="s7" {...props} />}
-                {step === 8 && <Step8 key="s8" {...props} />}
-                {step === 9 && <Step9 key="s9" {...props} />}
-                {step === 10 && <Step10 key="s10" {...props} />}
-                {step === 11 && <Step11 key="s11" {...props} />}
-                {step === 12 && <Step12 key="s12" {...props} />}
-                {step === 13 && <Step13 key="s13" {...props} />}
-                {step === 14 && <Step14 key="s14" {...props} />}
+                {stepId === 1 && <Step1 key="s1" {...props} />}
+                {stepId === 2 && <Step2 key="s2" {...props} />}
+                {stepId === 3 && <Step3 key="s3" {...props} />}
+                {stepId === 4 && <Step4 key="s4" {...props} />}
+                {stepId === 5 && <Step5 key="s5" {...props} />}
+                {stepId === 6 && <Step6 key="s6" {...props} />}
+                {stepId === 7 && <Step7 key="s7" {...props} />}
+                {stepId === 8 && <Step8 key="s8" {...props} />}
+                {stepId === 9 && <Step9 key="s9" {...props} />}
+                {stepId === 10 && <Step10 key="s10" {...props} />}
+                {stepId === 11 && <Step11 key="s11" {...props} />}
+                {stepId === 12 && <Step12 key="s12" {...props} />}
+                {stepId === 13 && <Step13 key="s13" {...props} />}
+                {stepId === 14 && <Step14 key="s14" {...props} />}
             </AnimatePresence>
         </div>
     );

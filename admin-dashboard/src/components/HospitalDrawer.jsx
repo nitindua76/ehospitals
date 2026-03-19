@@ -206,7 +206,7 @@ export function HospitalDrawer({ hospital, onClose, onToggleSelect, downloadFile
                                     <div className="m-det-item"><label>AERB Approval</label><span className={hospital.statutory_clearances?.aerb_approval ? 'success-text' : 'danger-text'}>{hospital.statutory_clearances?.aerb_approval ? 'Cleared' : 'Lacking'}</span></div>
                                     <div className="m-det-item"><label>Pharmacy License</label><span className={hospital.statutory_clearances?.pharmacy_license ? 'success-text' : 'danger-text'}>{hospital.statutory_clearances?.pharmacy_license ? 'Cleared' : 'Lacking'}</span></div>
                                     <div className="m-det-item"><label>Lift Safety</label><span className={hospital.statutory_clearances?.lift_safety ? 'success-text' : 'danger-text'}>{hospital.statutory_clearances?.lift_safety ? 'Cleared' : 'Lacking'}</span></div>
-                                    <div className="m-det-item"><label>CEA Registration</label><span className={hospital.statutory_clearances?.cea_registration ? 'success-text' : 'danger-text'}>{hospital.statutory_clearances?.cea_registration ? 'Cleared' : 'Lacking'}</span></div>
+                                    <div className="m-det-item"><label>Clinical Establishment Act Registration</label><span className={hospital.statutory_clearances?.cea_registration ? 'success-text' : 'danger-text'}>{hospital.statutory_clearances?.cea_registration ? 'Cleared' : 'Lacking'}</span></div>
                                 </div>
 
                                 <div className="doc-download-list" style={{ marginTop: 20 }}>

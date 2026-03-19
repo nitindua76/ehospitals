@@ -10,7 +10,7 @@ export function Step11({ form, setForm }) {
 
     return (
         <StepLayout
-            title="Step K: Other Facilities"
+            title="Step I: General Facilities"
             subtitle="General amenities for patients and attendants."
             icon="💡"
         >
