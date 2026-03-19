@@ -7,12 +7,11 @@ export function Header({ hospitalName, hospitalId, onSignOut }) {
             <div className="header-content">
                 <div className="header-left">
                     <div className="logo-container">
-                        <Shield className="logo-icon" size={28} />
-                        <div className="logo-accent" />
+                        <Shield size={22} />
                     </div>
                     <div className="brand-stack">
                         <h1 className="brand-name">MedCollaborate</h1>
-                        <p className="brand-tagline">Official Empanelment Gateway</p>
+                        <p className="brand-tagline">Empanelment Gateway</p>
                     </div>
                 </div>
 
@@ -23,12 +22,12 @@ export function Header({ hospitalName, hospitalId, onSignOut }) {
                             <span className="user-id">ID: {hospitalId.slice(-6).toUpperCase()}</span>
                         </div>
                         <div className="profile-avatar">
-                            <User size={18} />
+                            <User size={16} />
                         </div>
                     </div>
                     <div className="header-divider" />
                     <button className="sign-out-btn" onClick={onSignOut} title="Sign Out">
-                        <LogOut size={18} />
+                        <LogOut size={16} />
                     </button>
                 </div>
             </div>

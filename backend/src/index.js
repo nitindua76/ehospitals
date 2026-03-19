@@ -19,6 +19,7 @@ app.use(cors({
         const envAllowed = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
         const allowed = [
             'http://localhost:3000', 'http://localhost:3001',
+            'http://127.0.0.1:3000', 'http://127.0.0.1:3001',
             'http://localhost', 'http://localhost:8080',
             'http://ehospitals.ddns.net', 'https://ehospitals.ddns.net',
             'http://ehospitals.ddns.net:8080', 'https://ehospitals.ddns.net:8080',

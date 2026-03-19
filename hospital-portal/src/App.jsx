@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Send, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Send, Loader2, ChevronDown } from 'lucide-react'
 
 import './index.css'
 import './App.css'
@@ -197,47 +197,62 @@ export default function App() {
         )
     }
 
+    const stepClickHandler = (s) => { saveDraft(maxStep); setStep(s) }
+
     return (
         <div className="portal-layout">
             <Header hospitalName={hospitalAuth.name} hospitalId={hospitalAuth.hospitalId} onSignOut={signOut} />
 
             <main className="portal-main">
-                <Stepper steps={STEPS} currentStep={step} maxStep={maxStep} onStepClick={(s) => { saveDraft(maxStep); setStep(s) }} />
+                <Stepper steps={STEPS} currentStep={step} maxStep={maxStep} onStepClick={stepClickHandler} />
 
-                <motion.div
-                    className="form-card-premium"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4 }}
-                >
-                    <StepContent
-                        step={step}
-                        form={form}
-                        setForm={setForm}
-                        errors={errors}
-                        updateArrayField={updateArrayField}
-                        addArrayItem={addArrayItem}
-                        removeArrayItem={removeArrayItem}
-                        attachedFiles={attachedFiles}
-                        setAttachedFiles={setAttachedFiles}
-                    />
-
-                    <div className="form-nav-premium">
-                        <button className="btn-premium ghost" onClick={prev} disabled={step === 1}>
-                            <ChevronLeft size={18} /> Back
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* Mobile step selector */}
+                    <div className="mobile-step-selector">
+                        <button className="step-dropdown-btn" onClick={() => {}}>
+                            <span>{STEPS[step - 1].icon} {STEPS[step - 1].label}</span>
+                            <ChevronDown size={16} />
                         </button>
-                        <div className="step-counter-pro">Stage {step} of {STEPS.length}</div>
-                        {step < STEPS.length ? (
-                            <button className="btn-premium primary" onClick={next}>
-                                Next Step <ChevronRight size={18} />
-                            </button>
-                        ) : (
-                            <button className="btn-premium primary success" onClick={submit} disabled={loading}>
-                                {loading ? <Loader2 className="spinner" size={20} /> : <><Send size={18} /> Finalize & Submit</>}
-                            </button>
-                        )}
+                        <div className="step-progress-bar">
+                            <div className="step-progress-fill" style={{ width: `${((step) / STEPS.length) * 100}%` }} />
+                        </div>
                     </div>
-                </motion.div>
+
+                    <motion.div
+                        className="form-card-premium"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.35 }}
+                    >
+                        <StepContent
+                            step={step}
+                            form={form}
+                            setForm={setForm}
+                            errors={errors}
+                            updateArrayField={updateArrayField}
+                            addArrayItem={addArrayItem}
+                            removeArrayItem={removeArrayItem}
+                            attachedFiles={attachedFiles}
+                            setAttachedFiles={setAttachedFiles}
+                        />
+
+                        <div className="form-nav-premium">
+                            <button className="btn-premium ghost" onClick={prev} disabled={step === 1}>
+                                <ChevronLeft size={16} /> Back
+                            </button>
+                            <div className="step-counter-pro">{step} / {STEPS.length}</div>
+                            {step < STEPS.length ? (
+                                <button className="btn-premium primary" onClick={next}>
+                                    Continue <ChevronRight size={16} />
+                                </button>
+                            ) : (
+                                <button className="btn-premium primary success" onClick={submit} disabled={loading}>
+                                    {loading ? <Loader2 className="spinner" size={18} /> : <><Send size={16} /> Submit Application</>}
+                                </button>
+                            )}
+                        </div>
+                    </motion.div>
+                </div>
             </main>
         </div>
     )

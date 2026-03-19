@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, ChevronRight, Home, FileText, BadgeCheck } from 'lucide-react';
+import { CheckCircle2, Home, FileText, BadgeCheck } from 'lucide-react';
 
 export function SuccessScreen({ data, onReset }) {
     const referenceId = data?.hospital?._id || data?.id || 'EMP-2026-XP92';
@@ -9,26 +9,25 @@ export function SuccessScreen({ data, onReset }) {
         <div className="success-overlay">
             <motion.div
                 className="success-card-premium"
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, scale: 0.92, y: 16 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 120 }}
             >
                 <div className="success-header-art">
                     <motion.div
                         className="confetti-burst"
                         initial={{ scale: 0 }}
-                        animate={{ scale: [0, 1.2, 1] }}
+                        animate={{ scale: [0, 1.15, 1] }}
                         transition={{ delay: 0.3, duration: 0.5 }}
                     >
-                        <div className="circle-glow" />
-                        <CheckCircle2 size={80} className="check-icon-main" />
+                        <CheckCircle2 size={72} className="check-icon-main" />
                     </motion.div>
                 </div>
 
                 <div className="success-content">
                     <motion.h1
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5 }}
                     >
                         Application Submitted!
@@ -44,7 +43,7 @@ export function SuccessScreen({ data, onReset }) {
 
                     <motion.div
                         className="id-badge-container"
-                        initial={{ opacity: 0, x: -20 }}
+                        initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.8 }}
                     >
@@ -74,19 +73,19 @@ export function SuccessScreen({ data, onReset }) {
 
                     <div className="success-action-group">
                         <button className="btn-premium-primary" onClick={onReset}>
-                            <Home size={18} />
+                            <Home size={16} />
                             <span>Return to Dashboard</span>
                         </button>
                         <button className="btn-premium-ghost">
-                            <FileText size={18} />
-                            <span>Download PDF Receipt</span>
+                            <FileText size={16} />
+                            <span>Download Receipt</span>
                         </button>
                     </div>
                 </div>
 
                 <div className="success-footer-badge">
                     <BadgeCheck size={14} />
-                    <span>Secure Submission Verified · 2026 Cycle</span>
+                    <span>Secure Submission · 2026 Cycle</span>
                 </div>
             </motion.div>
         </div>

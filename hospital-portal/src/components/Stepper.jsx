@@ -3,20 +3,10 @@ import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 
 export function Stepper({ steps, currentStep, maxStep = 1, onStepClick }) {
-    const progress = ((maxStep - 1) / (steps.length - 1)) * 100;
-
     return (
         <div className="stepper-wrapper">
-            <div className="stepper-progress-bg">
-                <motion.div
-                    className="stepper-progress-fill"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                />
-            </div>
             <div className="stepper-items">
-                {steps.map((step, idx) => {
+                {steps.map((step) => {
                     const isUnlocked = maxStep >= step.id;
                     const isDone = currentStep > step.id || (maxStep > step.id && currentStep !== step.id);
                     const isActive = currentStep === step.id;
@@ -32,14 +22,18 @@ export function Stepper({ steps, currentStep, maxStep = 1, onStepClick }) {
                                 className="stepper-circle"
                                 initial={false}
                                 animate={{
-                                    scale: isActive ? 1.1 : 1,
-                                    backgroundColor: isActive || isDone ? 'var(--primary)' : 'var(--bg-card)',
-                                    borderColor: isActive || isDone ? 'var(--primary)' : 'var(--border)'
+                                    scale: isActive ? 1.08 : 1,
+                                    backgroundColor: isActive || isDone ? 'var(--primary)' : 'var(--slate-100)',
+                                    borderColor: isActive || isDone ? 'var(--primary)' : 'var(--border)',
+                                    color: isActive || isDone ? '#ffffff' : 'var(--text-muted)'
                                 }}
+                                transition={{ duration: 0.2 }}
                             >
-                                {isDone ? <Check size={14} color="white" strokeWidth={3} /> : step.icon}
+                                {isDone ? <Check size={14} strokeWidth={3} /> : step.icon}
                             </motion.div>
-                            <span className="stepper-label">{step.label.split(': ')[1] || step.label}</span>
+                            <span className="stepper-label">
+                                {step.label.split(': ')[1] || step.label}
+                            </span>
                         </div>
                     );
                 })}
