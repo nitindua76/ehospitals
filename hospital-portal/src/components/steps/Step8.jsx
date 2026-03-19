@@ -3,7 +3,7 @@ import { Field, Toggle } from '../ui/InputControls';
 import { StepLayout } from './StepLayout';
 import { Plus, Trash2 } from 'lucide-react';
 
-export function Step8({ form, setForm }) {
+export function Step8({ form, setForm, errors = {} }) {
     const addArrayItem = (key, initial) => {
         const arr = [...(form[key] || [])];
         arr.push(initial);
@@ -29,7 +29,7 @@ export function Step8({ form, setForm }) {
             icon="🏛️"
         >
             <div className="form-grid-3 full-width">
-                <Field label="Date of Inception of Hospital" name="date_of_inception" form={form} setForm={setForm} type="date" />
+                <Field label="Date of Inception of Hospital" name="date_of_inception" form={form} setForm={setForm} type="date" required error={errors.date_of_inception} />
                 <Toggle label="Previous Association with ONGC ?" name="ongc_association" form={form} setForm={setForm} />
                 {form.ongc_association === 'Yes' && (
                     <Field label="Years of Association (with ONGC)" name="ongc_association_years" form={form} setForm={setForm} type="number" />

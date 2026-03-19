@@ -3,7 +3,7 @@ import { Toggle } from '../ui/InputControls';
 import { StepLayout } from './StepLayout';
 import { Download, Info } from 'lucide-react';
 
-export function Step5({ form, setForm }) {
+export function Step5({ form, setForm, errors = {} }) {
     const diagnosticOptions = ['Not Available', 'InHouse', 'Outsourced'];
 
     const renderOutsourcedInfo = (fieldValue) => {
@@ -29,27 +29,35 @@ export function Step5({ form, setForm }) {
         >
             <div className="form-grid-2 full-width">
                 <div className="form-group">
-                    <label className="form-label">PET-CT Scan</label>
-                    <div className="radio-group-modern">
+                    <label className="form-label">
+                        PET-CT Scan <span className="required">*</span>
+                    </label>
+                    <div className={`radio-group-modern ${errors.pet_ct_scan ? 'input-error-ring' : ''}`}>
                         {diagnosticOptions.map(v => (
                             <button key={v} type="button" className={`radio-btn ${form.pet_ct_scan === v ? 'active' : ''}`} onClick={() => setForm({ ...form, pet_ct_scan: v })}>{v}</button>
                         ))}
                     </div>
+                    {errors.pet_ct_scan && <p className="error-text">{errors.pet_ct_scan}</p>}
                     {renderOutsourcedInfo(form.pet_ct_scan)}
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label">MRI Scan Facility</label>
-                    <div className="radio-group-modern">
+                    <label className="form-label">
+                        MRI Scan Facility <span className="required">*</span>
+                    </label>
+                    <div className={`radio-group-modern ${errors.mri_scan ? 'input-error-ring' : ''}`}>
                         {diagnosticOptions.map(v => (
                             <button key={v} type="button" className={`radio-btn ${form.mri_scan === v ? 'active' : ''}`} onClick={() => setForm({ ...form, mri_scan: v })}>{v}</button>
                         ))}
                     </div>
+                    {errors.mri_scan && <p className="error-text">{errors.mri_scan}</p>}
                     {renderOutsourcedInfo(form.mri_scan)}
                 </div>
 
                 <div className="form-group">
-                    <label className="form-label">CT Scan Facility</label>
+                    <label className="form-label">
+                        CT Scan Facility <span className="required">*</span>
+                    </label>
                     <div className="radio-group-modern">
                         {['No Scan', 'Single-Slice', 'Multi-Slice'].map(v => (
                             <button key={v} type="button" className={`radio-btn ${form.ct_scan === v ? 'active' : ''}`} onClick={() => setForm({ ...form, ct_scan: v })}>{v}</button>

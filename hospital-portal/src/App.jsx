@@ -174,6 +174,11 @@ export default function App() {
             }
             if (nodalErrors.length > 0) e.nodal_contacts = nodalErrors[0]
         }
+        if (s === 5) {
+            if (!formData.pet_ct_scan) e.pet_ct_scan = 'Please select PET-CT Scan status'
+            if (!formData.mri_scan) e.mri_scan = 'Please select MRI Scan status'
+            // ct_scan defaults to 'No Scan', so always has a value
+        }
         if (s === 8) {
             if (!formData.date_of_inception) e.date_of_inception = 'Inception date required'
         }
