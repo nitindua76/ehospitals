@@ -23,13 +23,12 @@ const STEPS = [
     { id: 9, label: 'E: Clinical Specialties', icon: '🔍', group: 'Clinical Capabilities' },
     { id: 5, label: 'F: Facilities', icon: '🏢', group: 'Facilities' },
     { id: 6, label: 'G: Capacity', icon: '🛏️', group: 'Facilities' },
-    { id: 7, label: 'H: Support Facilities', icon: '🛠️', group: 'Facilities' },
-    { id: 11, label: 'I: General Facilities', icon: '🌟', group: 'Facilities' },
-    { id: 10, label: 'J: Clinical Staff', icon: '👥', group: 'Human Resources' },
-    { id: 8, label: 'K: History & Associations', icon: '🏛️', group: 'Business & History' },
-    { id: 12, label: 'L: Declaration', icon: '✅', group: 'Finalization' },
-    { id: 13, label: 'M: Document Uploads', icon: '📤', group: 'Finalization' },
-    { id: 14, label: 'N: Review & Submit', icon: '📋', group: 'Finalization' }
+    { id: 11, label: 'H: General Facilities', icon: '🌟', group: 'Facilities' },
+    { id: 10, label: 'I: Clinical Staff', icon: '👥', group: 'Human Resources' },
+    { id: 8, label: 'J: History & Associations', icon: '🏛️', group: 'Business & History' },
+    { id: 12, label: 'K: Declaration', icon: '✅', group: 'Finalization' },
+    { id: 13, label: 'L: Document Uploads', icon: '📤', group: 'Finalization' },
+    { id: 14, label: 'M: Review & Submit', icon: '📋', group: 'Finalization' }
 ];
 
 const defaultForm = {
@@ -85,6 +84,12 @@ export default function App() {
     }, [])
 
     useEffect(() => {
+        if (STEPS.length > 0 && step > STEPS.length) {
+            setStep(STEPS.length);
+        }
+    }, [step, STEPS.length]);
+
+    useEffect(() => {
         if (!hospitalAuth) return;
         const loadDraft = async () => {
             setLoading(true)
@@ -100,8 +105,9 @@ export default function App() {
                     
                     setForm(f => ({ ...f, ...data }))
                     if (data.current_step) {
-                        setStep(data.current_step)
-                        setMaxStep(data.current_step)
+                        const s = Math.min(data.current_step, STEPS.length)
+                        setStep(s)
+                        setMaxStep(s)
                     }
                     if (res.data.attachments && typeof res.data.attachments === 'object') {
                         const reconstructedFiles = {}
@@ -258,7 +264,8 @@ export default function App() {
     }
 
     const next = async () => {
-        if (!validate(STEPS[step - 1].id)) return
+        const currentStep = STEPS[step - 1];
+        if (!currentStep || !validate(currentStep.id)) return
         const n = Math.min(step + 1, STEPS.length)
         const newMax = Math.max(maxStep, n)
         const ok = await saveDraft(newMax)
@@ -326,7 +333,7 @@ export default function App() {
                     {/* Mobile step selector */}
                     <div className="mobile-step-selector">
                         <button className="step-dropdown-btn" onClick={() => { }}>
-                            <span>{STEPS[step - 1].icon} {STEPS[step - 1].label}</span>
+                            <span>{STEPS[step - 1]?.icon || '🏥'} {STEPS[step - 1]?.label || 'Loading...'}</span>
                             <ChevronDown size={16} />
                         </button>
                         <div className="step-progress-bar">
@@ -341,7 +348,7 @@ export default function App() {
                         transition={{ duration: 0.35 }}
                     >
                         <StepContent
-                            stepId={STEPS[step - 1].id}
+                            stepId={STEPS[step - 1]?.id || 1}
                             hospitalId={hospitalAuth.hospitalId}
                             form={form}
                             setForm={setForm}

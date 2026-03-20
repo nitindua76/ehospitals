@@ -190,14 +190,9 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     'TOTAL BEDS': Object.values(form.capacity).reduce((a, b) => a + (parseInt(b) || 0), 0)
   });
 
-  // 8. Support Facilities (Step H)
-  addSection('8. Support Facilities', {
-    'Surgical & Trauma (24x7)': form.trauma_support_24x7,
-    'Corporate Help Desk': form.corporate_help_desk
-  });
 
-  // 9. General Amenities (Step I)
-  addSection('9. General Amenities', {
+  // 8. General Amenities (Step I)
+  addSection('8. General Amenities', {
     'Parking Area': form.general_facilities.parking ? 'Yes' : 'No',
     'Power Backup': form.general_facilities.power_backup ? 'Yes' : 'No',
     'Central AC': form.general_facilities.central_ac ? 'Yes' : 'No',
@@ -207,20 +202,20 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     'Mortuary': form.general_facilities.mortuary ? 'Yes' : 'No'
   });
 
-  // 10. Human Resources (Step J)
-  addSection('10. Human Resources', {
+  // 9. Human Resources (Step J)
+  addSection('9. Human Resources', {
     'Total Doctors': form.total_doctors,
     'Full-Time Consultants': form.full_time_doctors,
     'Total Nursing Staff': form.total_nursing_staff,
     'Full-Time Nurses': form.full_time_nursing_staff
   });
 
-  // 11. Registered Specialties (Step E)
+  // 10. Registered Specialties (Step E)
   if (form.specialties && form.specialties.length > 0) {
     if (currentY > 240) { doc.addPage(); currentY = 20; }
     doc.setFontSize(13);
     doc.setTextColor(44, 62, 80);
-    doc.text('11. REGISTERED SPECIALTIES', 20, currentY);
+    doc.text('10. REGISTERED SPECIALTIES', 20, currentY);
     currentY += 6;
     doc.setFontSize(9);
     doc.setTextColor(60);
@@ -230,8 +225,8 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     currentY += (splitSpecialties.length * 5) + 8;
   }
 
-  // 12. Association & Footfall (Step K)
-  addSection('12. Association & Historical Impact', {
+  // 11. Association & Historical Impact (Step K)
+  addSection('11. Association & Historical Impact', {
     'Hospital Inception Date': form.date_of_inception,
     'Previous ONGC Association?': form.ongc_association,
     'ONGC Association (Years)': form.ongc_association === 'Yes' ? form.ongc_association_years : '0',
@@ -241,20 +236,20 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     'Avg Patients 2025 (Jan-Dec)': form.ongc_patient_count.fy_24_25
   });
 
-  // 13. Organizations on Panel (Step K)
+  // 12. Organizations on Panel (Step K)
   if (form.panel_organizations && form.panel_organizations.length > 0) {
     const orgRows = form.panel_organizations.map(o => [o.name, o.since_year]);
-    addStaticTable('13. PSUs / Organizations on Panel', ['Organization Name', 'Associated Since'], orgRows);
+    addStaticTable('12. PSUs / Organizations on Panel', ['Organization Name', 'Associated Since'], orgRows);
   }
 
-  // 14. TPA / Insurance Tie-ups (Step K)
+  // 13. TPA / Insurance Tie-ups (Step K)
   if (form.tpa_tieups && form.tpa_tieups.length > 0) {
     const tpaRows = form.tpa_tieups.map(t => [t.name]);
-    addStaticTable('14. TPA / Insurance Tie-Ups', ['TPA / Insurance Name'], tpaRows);
+    addStaticTable('13. TPA / Insurance Tie-Ups', ['TPA / Insurance Name'], tpaRows);
   }
 
-  // 15. Signatory & Achievements (Step L)
-  addSection('15. Final Declaration & Signatory', {
+  // 14. Signatory & Achievements (Step L)
+  addSection('14. Final Declaration & Signatory', {
     'Authorized Signatory': form.signatory_name,
     'Signatory Designation': form.signatory_designation,
     'Submission Date': form.signatory_date,
@@ -273,16 +268,11 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     currentY += (splitAwards.length * 5) + 12;
   }
 
-  // 16. Document Attachments Inventory
-  const attachmentRows = Object.entries(attachments)
-    .filter(([_, file]) => file && file.name)
-    .map(([key, file]) => [DOC_LABELS[key] || key.replace(/_/g, ' ').toUpperCase(), 'Included as Annexure']);
-
   if (attachmentRows.length > 0) {
     if (currentY > 200) { doc.addPage(); currentY = 20; }
     doc.setFontSize(13);
     doc.setTextColor(44, 62, 80);
-    doc.text('16. ANNEXURES (ATTACHED DOCUMENTS)', 20, currentY);
+    doc.text('15. ANNEXURES (ATTACHED DOCUMENTS)', 20, currentY);
     currentY += 4;
 
     autoTable(doc, {

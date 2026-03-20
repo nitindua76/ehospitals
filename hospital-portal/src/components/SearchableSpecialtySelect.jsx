@@ -4,8 +4,8 @@ import { Search, X, Check, ArrowRight, Activity } from 'lucide-react';
 import { SPECIALTIES_LIST } from '../constants/specialties';
 
 const COMMON_SPECIALTIES = [
-    "General Medicine", "General Surgery", "Pediatrics", "Obstetrics & Gynecology",
-    "Orthopedics", "Cardiology", "Neurology", "Oncology", "Emergency Medicine"
+    "General medicine", "General surgery", "Pediatrics", "Obstetrics and Gynecology",
+    "Orthopedic surgery", "Cardiology", "Neurology", "Medical oncology", "Emergency medicine"
 ];
 
 export function SearchableSpecialtySelect({ selected, onAdd, onRemove }) {
