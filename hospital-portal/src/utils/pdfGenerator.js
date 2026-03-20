@@ -31,11 +31,11 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
   doc.setFontSize(22);
   doc.setTextColor(44, 62, 80);
   doc.text('HOSPITAL EMPANELMENT APPLICATION', pageWidth / 2, 20, { align: 'center' });
-  
+
   doc.setFontSize(16);
   doc.setTextColor(52, 152, 219);
   doc.text(`REFERENCE ID: ${refId}`, pageWidth / 2, 32, { align: 'center' });
-  
+
   doc.setDrawColor(52, 152, 219);
   doc.setLineWidth(1);
   doc.line(20, 38, pageWidth - 20, 38);
@@ -44,7 +44,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
 
   const addSection = (title, data) => {
     if (currentY > 240) { doc.addPage(); currentY = 20; }
-    
+
     doc.setFontSize(13);
     doc.setTextColor(44, 62, 80);
     doc.setFont('helvetica', 'bold');
@@ -52,7 +52,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     currentY += 4;
 
     const rows = Object.entries(data).map(([label, value]) => [label, String(value || 'N/A')]);
-    
+
     autoTable(doc, {
       startY: currentY,
       head: [['Field', 'Details']],
@@ -111,6 +111,10 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     'Account Number': form.account_no,
     'IFSC Code': form.ifsc_code,
     'ECS Mandate Attached': form.ecs_mandate_attached,
+    'IT Exemption Status': form.it_exemption,
+    'IT Exemption Valid Upto': form.it_exemption === 'Yes'
+      ? (form.it_exemption_permanent === 'Yes' ? 'Permanent' : (form.it_exemption_valid_until || 'Not Set'))
+      : 'N/A',
     'NABH Accredited': form.nabh_accredited,
     'NABL Accredited': form.nabl_accredited,
     'JCI Accredited': form.jci_accredited,
@@ -154,6 +158,15 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     'Hearse Van Tie-Up': form.hearse_van_tieup
   });
 
+  // 5b. Clinical Support Services (Step D)
+  addSection('5b. Clinical Support Services', {
+    'Pathology Lab (24x7)': form.pathology_lab,
+    'Radiology Services': form.radiology_services,
+    'Pharmacy (24x7)': form.pharmacy_24x7,
+    'Ambulance Facility': form.ambulance_facility,
+    'Free Ambulance Pickup & Drop': form.ambulance_free_pickup
+  });
+
   // 6. Diagnostic Services (Step F)
   addSection('6. Diagnostic Services', {
     'PET-CT Scan': form.pet_ct_scan,
@@ -179,12 +192,8 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
 
   // 8. Support Facilities (Step H)
   addSection('8. Support Facilities', {
-    'Pathology Lab (24x7)': form.pathology_lab,
-    'Pharmacy (24x7)': form.pharmacy_24x7,
     'Surgical & Trauma (24x7)': form.trauma_support_24x7,
-    'Corporate Help Desk': form.corporate_help_desk,
-    'Ambulance Facility': form.ambulance_facility,
-    'Free Pickup Service': form.ambulance_free_pickup
+    'Corporate Help Desk': form.corporate_help_desk
   });
 
   // 9. General Amenities (Step I)
@@ -194,7 +203,8 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     'Central AC': form.general_facilities.central_ac ? 'Yes' : 'No',
     'Waiting Lounge': form.general_facilities.waiting_lounge ? 'Yes' : 'No',
     'Cafeteria': form.general_facilities.cafeteria ? 'Yes' : 'No',
-    'Attendant Lodging': form.general_facilities.attendant_lodging ? 'Yes' : 'No'
+    'Attendant Lodging': form.general_facilities.attendant_lodging ? 'Yes' : 'No',
+    'Mortuary': form.general_facilities.mortuary ? 'Yes' : 'No'
   });
 
   // 10. Human Resources (Step J)
@@ -225,6 +235,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     'Hospital Inception Date': form.date_of_inception,
     'Previous ONGC Association?': form.ongc_association,
     'ONGC Association (Years)': form.ongc_association === 'Yes' ? form.ongc_association_years : '0',
+    'ONGC Vendor Code': form.ongc_association === 'Yes' ? (form.ongc_vendor_code || 'N/A') : 'N/A',
     'Avg Patients 2023 (Jan-Dec)': form.ongc_patient_count.fy_22_23,
     'Avg Patients 2024 (Jan-Dec)': form.ongc_patient_count.fy_23_24,
     'Avg Patients 2025 (Jan-Dec)': form.ongc_patient_count.fy_24_25
@@ -273,7 +284,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     doc.setTextColor(44, 62, 80);
     doc.text('16. ANNEXURES (ATTACHED DOCUMENTS)', 20, currentY);
     currentY += 4;
-    
+
     autoTable(doc, {
       startY: currentY,
       head: [['Document Category', 'Status']],
@@ -313,7 +324,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(150);
-    doc.text(`Application Form | ${form.name} | Ref: ${refId} | Page ${i} of ${pageCount}`, pageWidth/2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+    doc.text(`Application Form | ${form.name} | Ref: ${refId} | Page ${i} of ${pageCount}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
   }
 
   // --- BEGIN MERGING ATTACHMENTS ---
@@ -382,7 +393,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
         if (contentType === 'application/pdf') {
           const attachmentPdf = await PDFDocument.load(attachmentBytes);
           const copiedPages = await finalPdf.copyPages(attachmentPdf, attachmentPdf.getPageIndices());
-          
+
           copiedPages.forEach((page, idx) => {
             const { height } = page.getSize();
             page.drawText(`ANNEXURE: ${DOC_LABELS[key]} | Hospital: ${form.name} | Ref: ${refId} | Page ${idx + 1}`, {
@@ -395,13 +406,13 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
             finalPdf.addPage(page);
           });
         } else if (contentType && contentType.startsWith('image/')) {
-          const image = contentType.includes('png') 
-            ? await finalPdf.embedPng(attachmentBytes) 
+          const image = contentType.includes('png')
+            ? await finalPdf.embedPng(attachmentBytes)
             : await finalPdf.embedJpg(attachmentBytes);
-          
+
           const page = finalPdf.addPage();
           const { width, height } = page.getSize();
-          
+
           const dims = image.scaleToFit(width - 80, height - 120);
           page.drawImage(image, {
             x: (width - dims.width) / 2,

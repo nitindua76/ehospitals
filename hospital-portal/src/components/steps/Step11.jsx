@@ -21,6 +21,7 @@ export function Step11({ form, setForm }) {
                 <Toggle label="Waiting Lounge" name="waiting_lounge" form={{ waiting_lounge: form.general_facilities.waiting_lounge ? 'Yes' : 'No' }} setForm={() => toggleFacility('waiting_lounge')} />
                 <Toggle label="Cafeteria" name="cafeteria" form={{ cafeteria: form.general_facilities.cafeteria ? 'Yes' : 'No' }} setForm={() => toggleFacility('cafeteria')} />
                 <Toggle label="Attendant Lodging" name="attendant_lodging" form={{ attendant_lodging: form.general_facilities.attendant_lodging ? 'Yes' : 'No' }} setForm={() => toggleFacility('attendant_lodging')} />
+                <Toggle label="Mortuary" name="mortuary" form={{ mortuary: form.general_facilities.mortuary ? 'Yes' : 'No' }} setForm={() => toggleFacility('mortuary')} />
             </div>
         </StepLayout>
     );

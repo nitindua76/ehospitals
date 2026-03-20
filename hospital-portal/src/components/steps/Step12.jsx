@@ -10,11 +10,11 @@ export function Step12({ form, setForm, errors }) {
             icon="✅"
         >
             <div className="full-width">
-                <Toggle 
-                    label="I declare that this hospital is not blacklisted by any government/private agency." 
-                    name="declaration_no_blacklisting" 
-                    form={{ declaration_no_blacklisting: form.declaration_no_blacklisting ? 'Yes' : 'No' }} 
-                    setForm={(v) => setForm({ ...form, declaration_no_blacklisting: v.declaration_no_blacklisting === 'Yes' })} 
+                <Toggle
+                    label="I declare that this hospital is not blacklisted by any government/private agency."
+                    name="declaration_no_blacklisting"
+                    form={{ declaration_no_blacklisting: form.declaration_no_blacklisting ? 'Yes' : 'No' }}
+                    setForm={(v) => setForm({ ...form, declaration_no_blacklisting: v.declaration_no_blacklisting === 'Yes' })}
                     required={true}
                     error={errors?.declaration_no_blacklisting}
                 />
@@ -28,7 +28,7 @@ export function Step12({ form, setForm, errors }) {
                 </div>
 
                 <div className="form-group" style={{ marginTop: 24 }}>
-                    <label className="form-label">Key Achievements / Awards</label>
+                    <label className="form-label">Key Achievements / Awards / Facilities</label>
                     <textarea
                         className="form-input"
                         rows="4"

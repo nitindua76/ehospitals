@@ -28,11 +28,14 @@ export function Step8({ form, setForm, errors = {} }) {
             subtitle="Terms of association and historical data."
             icon="🏛️"
         >
-            <div className="form-grid-3 full-width">
+            <div className={`${form.ongc_association === 'Yes' ? 'form-grid-4' : 'form-grid-3'} full-width`}>
                 <Field label="Date of Inception of Hospital" name="date_of_inception" form={form} setForm={setForm} type="date" required error={errors.date_of_inception} />
                 <Toggle label="Previous Association with ONGC ?" name="ongc_association" form={form} setForm={setForm} />
                 {form.ongc_association === 'Yes' && (
-                    <Field label="Years of Association (with ONGC)" name="ongc_association_years" form={form} setForm={setForm} type="number" />
+                    <>
+                        <Field label="Years of Association (with ONGC)" name="ongc_association_years" form={form} setForm={setForm} type="number" />
+                        <Field label="Vendor Code (in ONGC)" name="ongc_vendor_code" form={form} setForm={setForm} />
+                    </>
                 )}
             </div>
 

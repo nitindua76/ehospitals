@@ -43,13 +43,13 @@ const defaultForm = {
     ct_scan: 'No Scan', mri_scan: 'Not Available', pet_ct_scan: 'Not Available', echo_cardiology: 'No', digital_xray: 'No', ultrasound: 'No',
     specialties: [],
     capacity: { general: '', semi_private: '', private: '', private_single_ac: '', private_deluxe_ac: '', private_suite: '', icu: '', hdu: '' }, total_beds: '', tariffs_attached: 'No',
-    pathology_lab: 'No', pharmacy_24x7: 'No', trauma_support_24x7: 'No', corporate_help_desk: 'No', ambulance_facility: 'No', ambulance_free_pickup: 'No',
-    bank_name: '', account_no: '', ifsc_code: '', ecs_mandate_attached: 'No',
+    pathology_lab: 'No', radiology_services: 'No', pharmacy_24x7: 'No', trauma_support_24x7: 'No', corporate_help_desk: 'No', ambulance_facility: 'No', ambulance_free_pickup: 'No',
+    bank_name: '', account_no: '', ifsc_code: '', ecs_mandate_attached: 'No', it_exemption: 'No', it_exemption_permanent: 'No', it_exemption_valid_until: '',
     date_of_inception: '', panel_organizations: [], tpa_tieups: [],
     signatory_name: '', signatory_designation: '', signatory_date: '',
-    cghs_rates_acceptable: 'No', ongc_discount_percent: '', ongc_association: 'No', ongc_association_years: '', ongc_patient_count: { fy_22_23: '', fy_23_24: '', fy_24_25: '' },
+    cghs_rates_acceptable: 'No', ongc_discount_percent: '', ongc_association: 'No', ongc_association_years: '', ongc_vendor_code: '', ongc_patient_count: { fy_22_23: '', fy_23_24: '', fy_24_25: '' },
     total_doctors: '', full_time_doctors: '', total_nursing_staff: '', full_time_nursing_staff: '', clinicians: [{ name: '', specialty: '', experience: '' }],
-    general_facilities: { parking: false, power_backup: false, central_ac: false, waiting_lounge: false, cafeteria: false, attendant_lodging: false },
+    general_facilities: { parking: false, power_backup: false, central_ac: false, waiting_lounge: false, cafeteria: false, attendant_lodging: false, mortuary: false },
     declaration_no_blacklisting: false, achievements: '',
 }
 
@@ -96,6 +96,7 @@ export default function App() {
                     const data = { ...res.data };
                     if (data.date_of_inception) data.date_of_inception = data.date_of_inception.split('T')[0];
                     if (data.signatory_date) data.signatory_date = data.signatory_date.split('T')[0];
+                    if (data.it_exemption_valid_until) data.it_exemption_valid_until = data.it_exemption_valid_until.split('T')[0];
                     
                     setForm(f => ({ ...f, ...data }))
                     if (data.current_step) {
@@ -173,6 +174,11 @@ export default function App() {
                 }
             }
             if (nodalErrors.length > 0) e.nodal_contacts = nodalErrors[0]
+        }
+        if (s === 3) {
+            if (formData.it_exemption === 'Yes' && formData.it_exemption_permanent !== 'Yes' && !formData.it_exemption_valid_until) {
+                e.it_exemption_valid_until = 'Exemption validity date required'
+            }
         }
         if (s === 5) {
             if (!formData.pet_ct_scan) e.pet_ct_scan = 'Please select PET-CT Scan status'

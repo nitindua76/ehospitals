@@ -645,6 +645,14 @@ body {
     width: 100%;
 }
 
+.form-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+    grid-column: 1 / -1;
+    width: 100%;
+}
+
 
 /* ── Form Fields ── */
 

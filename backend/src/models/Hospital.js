@@ -64,6 +64,7 @@ const hospitalSchema = new mongoose.Schema({
   accreditation_valid_until: Date,
   accreditation_attached: { type: Boolean, default: false },
   it_exemption: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  it_exemption_permanent: { type: String, enum: ['Yes', 'No'], default: 'No' },
   it_exemption_valid_until: Date,
   it_exemption_attached: { type: Boolean, default: false },
   statutory_clearances: {
@@ -140,6 +141,7 @@ const hospitalSchema = new mongoose.Schema({
 
   // SECTION G: SUPPORT SERVICES (Duplicate fields merged with facilities)
   pathology_lab: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  radiology_services: { type: String, enum: ['Yes', 'No'], default: 'No' },
   pharmacy_24x7: { type: String, enum: ['Yes', 'No'], default: 'No' },
   trauma_support_24x7: { type: String, enum: ['Yes', 'No'], default: 'No' },
   corporate_help_desk: { type: String, enum: ['Yes', 'No'], default: 'No' },
@@ -161,6 +163,7 @@ const hospitalSchema = new mongoose.Schema({
     fy_24_25: { type: Number, default: 0 },
     period_25: { type: Number, default: 0 }
   },
+  ongc_vendor_code: { type: String, trim: true },
   panel_organizations: [{
     name: String,
     since_year: Number
@@ -193,7 +196,8 @@ const hospitalSchema = new mongoose.Schema({
     central_ac: { type: Boolean, default: false },
     waiting_lounge: { type: Boolean, default: false },
     cafeteria: { type: Boolean, default: false },
-    attendant_lodging: { type: Boolean, default: false }
+    attendant_lodging: { type: Boolean, default: false },
+    mortuary: { type: Boolean, default: false }
   },
 
   // SECTION L: DECLARATION

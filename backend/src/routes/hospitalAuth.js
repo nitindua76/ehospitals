@@ -160,6 +160,9 @@ router.put('/me', hospitalAuth, async (req, res) => {
             updateData['hospital_age'] = age > 0 ? age : 0;
         }
 
+        // ONGC
+        if (rawUpdateData.ongc_vendor_code !== undefined) updateData['ongc_vendor_code'] = rawUpdateData.ongc_vendor_code;
+
         // Bank Details
         if (rawUpdateData.bank_name !== undefined) updateData['bank_details.bank_name'] = rawUpdateData.bank_name;
         if (rawUpdateData.account_no !== undefined) updateData['bank_details.account_no'] = rawUpdateData.account_no;
@@ -170,6 +173,15 @@ router.put('/me', hospitalAuth, async (req, res) => {
         if (rawUpdateData.signatory_name !== undefined) updateData['authorized_signatory.name'] = rawUpdateData.signatory_name;
         if (rawUpdateData.signatory_designation !== undefined) updateData['authorized_signatory.designation'] = rawUpdateData.signatory_designation;
         if (rawUpdateData.signatory_date !== undefined) updateData['authorized_signatory.date'] = rawUpdateData.signatory_date;
+
+        // IT Exemption
+        if (rawUpdateData.it_exemption !== undefined) updateData['it_exemption'] = rawUpdateData.it_exemption;
+        if (rawUpdateData.it_exemption_permanent !== undefined) updateData['it_exemption_permanent'] = rawUpdateData.it_exemption_permanent;
+        if (rawUpdateData.it_exemption_valid_until !== undefined) {
+            updateData['it_exemption_valid_until'] = rawUpdateData.it_exemption_valid_until
+                ? new Date(rawUpdateData.it_exemption_valid_until)
+                : null;
+        }
 
         // Manpower Mapping
         if (rawUpdateData.clinicians && Array.isArray(rawUpdateData.clinicians)) {
@@ -209,6 +221,8 @@ router.put('/me', hospitalAuth, async (req, res) => {
             'ct_scan', 'mri_scan', 'pet_ct_scan', 'echo_cardiology', 'digital_xray', 'ultrasound', 'tariffs_attached', 'capacity', 'ongc_patient_count', 'general_facilities',
             'clinicians', 'bank_name', 'account_no', 'ifsc_code', 'ecs_mandate_attached', 'date_of_inception',
             'signatory_name', 'signatory_designation', 'signatory_date',
+            'it_exemption', 'it_exemption_permanent', 'it_exemption_valid_until',
+            'ongc_vendor_code',
             // Also exclude the structured objects themselves to avoid conflicts
             'accreditations', 'statutory_clearances', 'facilities', 'diagnostic_facilities', 'consultants', 'bank_details', 'authorized_signatory'
         ];

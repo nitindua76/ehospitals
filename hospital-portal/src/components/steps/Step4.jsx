@@ -44,6 +44,24 @@ export function Step4({ form, setForm }) {
                 <Toggle label="Air Ambulance Tie-Up" name="air_ambulance_tieup" form={form} setForm={setForm} />
                 <Toggle label="Hearse Van Tie-Up" name="hearse_van_tieup" form={form} setForm={setForm} />
             </div>
+
+            <div className="form-section-divider full-width">
+                <h4>Clinical Support Services</h4>
+            </div>
+            <div className="form-grid-3 full-width">
+                <Toggle label="Pathology Lab (24x7)" name="pathology_lab" form={form} setForm={setForm} />
+                <Toggle label="Radiology Services" name="radiology_services" form={form} setForm={setForm} />
+                <Toggle label="Pharmacy (24x7)" name="pharmacy_24x7" form={form} setForm={setForm} />
+                <div className="form-group">
+                    <label className="form-label">Ambulance Facility</label>
+                    <div className="radio-group-modern">
+                        {['No', 'Basic', 'ALS'].map(v => (
+                            <button key={v} type="button" className={`radio-btn ${form.ambulance_facility === v ? 'active' : ''}`} onClick={() => setForm({ ...form, ambulance_facility: v })}>{v}</button>
+                        ))}
+                    </div>
+                </div>
+                <Toggle label="Free Ambulance Pickup & Drop for Emergency/IPD?" name="ambulance_free_pickup" form={form} setForm={setForm} />
+            </div>
         </StepLayout>
     );
 }
