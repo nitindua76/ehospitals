@@ -49,14 +49,14 @@ export function Step14({ form, hospitalId, validation, attachedFiles, token }) {
                     <div className="review-card-content">
                         <h4>Application Review</h4>
                         <p>To ensure 100% accuracy, please download your complete application as a professional PDF. Cross-check all fields, documents, and declarations before final submission.</p>
-                        
+
                         <button className="btn-download-pdf large" onClick={downloadReview} type="button">
                             <Download size={20} /> Download Review PDF
                         </button>
 
                         <AnimatePresence>
                             {downloadProgress > 0 && (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
@@ -68,7 +68,7 @@ export function Step14({ form, hospitalId, validation, attachedFiles, token }) {
                                         <span>{downloadProgress}%</span>
                                     </div>
                                     <div className="progress-track" style={{ height: '8px', background: 'rgba(52, 152, 219, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                                        <motion.div 
+                                        <motion.div
                                             className="progress-fill"
                                             initial={{ width: 0 }}
                                             animate={{ width: `${downloadProgress}%` }}
@@ -86,7 +86,7 @@ export function Step14({ form, hospitalId, validation, attachedFiles, token }) {
                     <ol>
                         <li>Download the <strong>Review PDF</strong> and check all the details.</li>
                         <li>If everything is correct, click <strong>Submit Application</strong>.</li>
-                        <li>After submission, download the <strong>Final PDF</strong>, sign each page, and submit the hard copy.</li>
+                        <li>After submission, download the <strong>Final PDF</strong>, print on the <strong>Hospital Letterhead</strong>, sign each page, and submit the hard copy.</li>
                     </ol>
                 </div>
 

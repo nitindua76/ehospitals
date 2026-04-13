@@ -163,6 +163,7 @@ router.put('/me', hospitalAuth, async (req, res) => {
         // ONGC
         if (rawUpdateData.ongc_vendor_code !== undefined) updateData['ongc_vendor_code'] = rawUpdateData.ongc_vendor_code;
         if (rawUpdateData.cghs_rates_acceptable !== undefined) updateData['cghs_rates_acceptable'] = rawUpdateData.cghs_rates_acceptable;
+        if (rawUpdateData.schedule_of_charges_attached !== undefined) updateData['schedule_of_charges_attached'] = rawUpdateData.schedule_of_charges_attached;
         if (rawUpdateData.ongc_discount_percent !== undefined) updateData['ongc_discount_percent'] = Number(rawUpdateData.ongc_discount_percent) || 0;
 
         // Bank Details

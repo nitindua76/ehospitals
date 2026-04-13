@@ -186,7 +186,8 @@ export function HospitalDrawer({ hospital, onClose, onToggleSelect, downloadFile
                                     <div className="m-det-item"><label>CGHS Rates Acceptable</label><span className={hospital.cghs_rates_acceptable === 'Yes' ? 'm-tag success' : 'm-tag danger'} style={{ display: 'inline-block', width: 'max-content', padding: '4px 8px' }}>{hospital.cghs_rates_acceptable || 'No'}</span></div>
                                     <div className="m-det-item"><label>ONGC Target Discount</label><span>{hospital.ongc_discount_percent || 0}%</span></div>
                                     <div className="m-det-item"><label>Bank ECS Enabled</label><span>{hospital.bank_ecs_attached ? 'Yes' : 'No'}</span></div>
-                                    <div className="m-det-item"><label>Income Tax Exemption</label><span>{hospital.it_exemption === 'Yes' ? `Available until ${new Date(hospital.it_exemption_valid_until).toLocaleDateString()}` : 'No'}</span></div>
+                                    <div className="m-det-item"><label>Income Tax Exemption</label><span>{hospital.it_exemption === 'Yes' ? (hospital.it_exemption_valid_until ? `Available until ${new Date(hospital.it_exemption_valid_until).toLocaleDateString()}` : 'Permanent') : 'No'}</span></div>
+                                    <div className="m-det-item"><label>Schedule of Charges</label><span>{hospital.schedule_of_charges_attached || 'No'}</span></div>
                                 </div>
                             </div>
 
@@ -217,6 +218,8 @@ export function HospitalDrawer({ hospital, onClose, onToggleSelect, downloadFile
                                     {renderDocument('fire_safety', 'Fire NOC', 'fire_safety_attached')}
                                     {renderDocument('bank_ecs', 'Bank ECS', 'bank_ecs_attached')}
                                     {renderDocument('tariff', 'Schedule of Charges', 'tariff_attached')}
+                                    {renderDocument('room_tariffs', 'Room Tariffs', '')}
+                                    {renderDocument('schedule_of_charges', 'Public Charges', '')}
                                     {renderDocument('biomedical', 'BMW Mgmt', 'biomedical_attached')}
                                     {renderDocument('pharmacy', 'Pharmacy License', 'pharmacy_attached')}
                                 </div>

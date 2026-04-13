@@ -19,6 +19,8 @@ const DOC_LABELS = {
   cea_registration: 'CEA Registration Certificate',
   bank_ecs: 'Bank/ECS Details (Signed)',
   tariff: 'Schedule of Charges (Tariff)',
+  room_tariffs: 'Room categories available with Tariffs and Facilities',
+  schedule_of_charges: 'General Public Schedule of Charges',
   mri_declaration: 'MRI Outsourced Declaration',
   pet_ct_declaration: 'PET-CT Outsourced Declaration'
 };
@@ -255,6 +257,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
   // 14. Financial Details (Step K)
   addSection('14. Financial Details', {
     'Acceptability of CGHS Rates': form.cghs_rates_acceptable || 'No',
+    'General Public Schedule of Charges': form.schedule_of_charges_attached || 'No',
     'Discounts offered to ONGC': form.ongc_discount_percent ? `${form.ongc_discount_percent}%` : '0%'
   });
 
