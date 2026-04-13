@@ -399,7 +399,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
             const { height } = page.getSize();
             page.drawText(`ANNEXURE: ${DOC_LABELS[key]} | Hospital: ${form.name} | Ref: ${refId} | Page ${idx + 1}`, {
               x: 20,
-              y: height - 65,
+              y: height - 30,
               size: 8,
               font: courierFont,
               color: rgb(0.8, 0, 0),
@@ -424,7 +424,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
 
           page.drawText(`ANNEXURE: ${DOC_LABELS[key]} | Hospital: ${form.name} | Ref: ${refId}`, {
             x: 20,
-            y: height - 65,
+            y: height - 30,
             size: 10,
             font: courierFont,
             color: rgb(0.8, 0, 0),
