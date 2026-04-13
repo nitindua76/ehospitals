@@ -26,9 +26,10 @@ const STEPS = [
     { id: 11, label: 'H: General Facilities', icon: '🌟', group: 'Facilities' },
     { id: 10, label: 'I: Clinical Staff', icon: '👥', group: 'Human Resources' },
     { id: 8, label: 'J: History & Associations', icon: '🏛️', group: 'Business & History' },
-    { id: 12, label: 'K: Declaration', icon: '✅', group: 'Finalization' },
-    { id: 13, label: 'L: Document Uploads', icon: '📤', group: 'Finalization' },
-    { id: 14, label: 'M: Review & Submit', icon: '📋', group: 'Finalization' }
+    { id: 15, label: 'K: Financials', icon: '💰', group: 'Finalization' },
+    { id: 12, label: 'L: Declaration', icon: '✅', group: 'Finalization' },
+    { id: 13, label: 'M: Document Uploads', icon: '📤', group: 'Finalization' },
+    { id: 14, label: 'N: Review & Submit', icon: '📋', group: 'Finalization' }
 ];
 
 const defaultForm = {
@@ -46,7 +47,7 @@ const defaultForm = {
     bank_name: '', account_no: '', ifsc_code: '', ecs_mandate_attached: 'No', it_exemption: 'No', it_exemption_permanent: 'No', it_exemption_valid_until: '',
     date_of_inception: '', panel_organizations: [], tpa_tieups: [],
     signatory_name: '', signatory_designation: '', signatory_date: '',
-    cghs_rates_acceptable: 'No', ongc_discount_percent: '', ongc_association: 'No', ongc_association_years: '', ongc_vendor_code: '', ongc_patient_count: { fy_22_23: '', fy_23_24: '', fy_24_25: '' },
+    cghs_rates_acceptable: '', ongc_discount_percent: '', ongc_association: 'No', ongc_association_years: '', ongc_vendor_code: '', ongc_patient_count: { fy_22_23: '', fy_23_24: '', fy_24_25: '' },
     total_doctors: '', full_time_doctors: '', total_nursing_staff: '', full_time_nursing_staff: '', clinicians: [{ name: '', specialty: '', experience: '' }],
     general_facilities: { parking: false, power_backup: false, central_ac: false, waiting_lounge: false, cafeteria: false, attendant_lodging: false, mortuary: false },
     declaration_no_blacklisting: false, achievements: '',
@@ -196,9 +197,13 @@ export default function App() {
         }
         if (s === 12) {
             if (!formData.declaration_no_blacklisting) e.declaration_no_blacklisting = 'Declaration required'
-            if (!formData.signatory_name?.trim()) e.signatory_name = 'Signatory name required'
-            if (!formData.signatory_designation?.trim()) e.signatory_designation = 'Designation required'
-            if (!formData.signatory_date?.trim()) e.signatory_date = 'Date required'
+            if (!String(formData.signatory_name || '').trim()) e.signatory_name = 'Signatory name required'
+            if (!String(formData.signatory_designation || '').trim()) e.signatory_designation = 'Designation required'
+            if (!String(formData.signatory_date || '').trim()) e.signatory_date = 'Date required'
+        }
+        if (s === 15) {
+            if (!formData.cghs_rates_acceptable) e.cghs_rates_acceptable = 'Please confirm CGHS rates acceptability'
+            if (!String(formData.ongc_discount_percent || '').trim()) e.ongc_discount_percent = 'Discount percentage required'
         }
         if (s === 13) {
             const reqKeys = ['pan', 'gst', 'bank_ecs'];

@@ -28,6 +28,9 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     .filter(([key, file]) => file && file.id)
     .map(([key, file]) => [DOC_LABELS[key] || key, 'Attached']);
 
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
   // Header - Shifted down for Letterhead
   doc.setFontSize(22);
   doc.setTextColor(44, 62, 80);
@@ -249,8 +252,14 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     addStaticTable('13. TPA / Insurance Tie-Ups', ['TPA / Insurance Name'], tpaRows);
   }
 
-  // 14. Signatory & Achievements (Step L)
-  addSection('14. Final Declaration & Signatory', {
+  // 14. Financial Details (Step K)
+  addSection('14. Financial Details', {
+    'Acceptability of CGHS Rates': form.cghs_rates_acceptable || 'No',
+    'Discounts offered to ONGC': form.ongc_discount_percent ? `${form.ongc_discount_percent}%` : '0%'
+  });
+
+  // 15. Signatory & Achievements (Step L)
+  addSection('15. Final Declaration & Signatory', {
     'Authorized Signatory': form.signatory_name,
     'Signatory Designation': form.signatory_designation,
     'Submission Date': form.signatory_date,
@@ -269,12 +278,12 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     currentY += (splitAwards.length * 5) + 12;
   }
 
-  // 15. Attachments Table (Annexures)
+  // 16. Attachments Table (Annexures)
   if (attachmentRows.length > 0) {
     if (currentY > 200) { doc.addPage(); currentY = 60; }
     doc.setFontSize(13);
     doc.setTextColor(44, 62, 80);
-    doc.text('15. ANNEXURES (ATTACHED DOCUMENTS)', 20, currentY);
+    doc.text('16. ANNEXURES (ATTACHED DOCUMENTS)', 20, currentY);
     currentY += 4;
 
     autoTable(doc, {

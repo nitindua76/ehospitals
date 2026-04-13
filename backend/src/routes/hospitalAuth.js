@@ -162,6 +162,8 @@ router.put('/me', hospitalAuth, async (req, res) => {
 
         // ONGC
         if (rawUpdateData.ongc_vendor_code !== undefined) updateData['ongc_vendor_code'] = rawUpdateData.ongc_vendor_code;
+        if (rawUpdateData.cghs_rates_acceptable !== undefined) updateData['cghs_rates_acceptable'] = rawUpdateData.cghs_rates_acceptable;
+        if (rawUpdateData.ongc_discount_percent !== undefined) updateData['ongc_discount_percent'] = Number(rawUpdateData.ongc_discount_percent) || 0;
 
         // Bank Details
         if (rawUpdateData.bank_name !== undefined) updateData['bank_details.bank_name'] = rawUpdateData.bank_name;
@@ -222,7 +224,7 @@ router.put('/me', hospitalAuth, async (req, res) => {
             'clinicians', 'bank_name', 'account_no', 'ifsc_code', 'ecs_mandate_attached', 'date_of_inception',
             'signatory_name', 'signatory_designation', 'signatory_date',
             'it_exemption', 'it_exemption_permanent', 'it_exemption_valid_until',
-            'ongc_vendor_code',
+            'ongc_vendor_code', 'cghs_rates_acceptable', 'ongc_discount_percent',
             // Also exclude the structured objects themselves to avoid conflicts
             'accreditations', 'statutory_clearances', 'facilities', 'diagnostic_facilities', 'consultants', 'bank_details', 'authorized_signatory'
         ];

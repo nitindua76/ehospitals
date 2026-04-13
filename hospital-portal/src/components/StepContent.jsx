@@ -12,6 +12,7 @@ import { Step11 } from './steps/Step11';
 import { Step12 } from './steps/Step12';
 import { Step13 } from './steps/Step13';
 import { Step14 } from './steps/Step14';
+import { Step15 } from './steps/Step15';
 import { AnimatePresence } from 'framer-motion';
 
 export function StepContent({ stepId, ...props }) {
@@ -29,6 +30,7 @@ export function StepContent({ stepId, ...props }) {
                 {stepId === 10 && <Step10 key="s10" {...props} />}
                 {stepId === 11 && <Step11 key="s11" {...props} />}
                 {stepId === 12 && <Step12 key="s12" {...props} />}
+                {stepId === 15 && <Step15 key="s15" {...props} />}
                 {stepId === 13 && <Step13 key="s13" {...props} />}
                 {stepId === 14 && <Step14 key="s14" {...props} />}
             </AnimatePresence>
