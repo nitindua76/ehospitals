@@ -268,6 +268,11 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     currentY += (splitAwards.length * 5) + 12;
   }
 
+  // 15. Attachments Table (Annexures)
+  const attachmentRows = Object.entries(attachments || {})
+    .filter(([key, file]) => file && file.id)
+    .map(([key, file]) => [DOC_LABELS[key] || key, 'Attached']);
+
   if (attachmentRows.length > 0) {
     if (currentY > 200) { doc.addPage(); currentY = 20; }
     doc.setFontSize(13);
