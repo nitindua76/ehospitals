@@ -24,26 +24,27 @@ const DOC_LABELS = {
 };
 
 export const generateHospitalPDF = async (form, refId, attachments = {}, token, API_URL, onProgress) => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
+  const attachmentRows = Object.entries(attachments || {})
+    .filter(([key, file]) => file && file.id)
+    .map(([key, file]) => [DOC_LABELS[key] || key, 'Attached']);
 
-  // Header
+  // Header - Shifted down for Letterhead
   doc.setFontSize(22);
   doc.setTextColor(44, 62, 80);
-  doc.text('HOSPITAL EMPANELMENT APPLICATION', pageWidth / 2, 20, { align: 'center' });
+  doc.text('HOSPITAL EMPANELMENT APPLICATION', pageWidth / 2, 70, { align: 'center' });
 
   doc.setFontSize(16);
   doc.setTextColor(52, 152, 219);
-  doc.text(`REFERENCE ID: ${refId}`, pageWidth / 2, 32, { align: 'center' });
+  doc.text(`REFERENCE ID: ${refId}`, pageWidth / 2, 82, { align: 'center' });
 
   doc.setDrawColor(52, 152, 219);
   doc.setLineWidth(1);
-  doc.line(20, 38, pageWidth - 20, 38);
+  doc.line(20, 88, pageWidth - 20, 88);
 
-  let currentY = 50;
+  let currentY = 100;
 
   const addSection = (title, data) => {
-    if (currentY > 240) { doc.addPage(); currentY = 20; }
+    if (currentY > 240) { doc.addPage(); currentY = 60; }
 
     doc.setFontSize(13);
     doc.setTextColor(44, 62, 80);
@@ -61,14 +62,14 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
       headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255], fontStyle: 'bold' },
       styles: { fontSize: 9, cellPadding: 2.5 },
       columnStyles: { 0: { cellWidth: 70, fontStyle: 'bold' } },
-      margin: { left: 20, right: 20 },
+      margin: { left: 20, right: 20, top: 60 },
       didDrawPage: (d) => { currentY = d.cursor.y + 10; }
     });
     currentY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : currentY) + 12;
   };
 
   const addStaticTable = (title, headers, body) => {
-    if (currentY > 240) { doc.addPage(); currentY = 20; }
+    if (currentY > 240) { doc.addPage(); currentY = 60; }
     doc.setFontSize(13);
     doc.setTextColor(44, 62, 80);
     doc.text(title.toUpperCase(), 20, currentY);
@@ -80,7 +81,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
       theme: 'grid',
       headStyles: { fillColor: [52, 152, 219] },
       styles: { fontSize: 9 },
-      margin: { left: 20, right: 20 }
+      margin: { left: 20, right: 20, top: 60 }
     });
     currentY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : currentY) + 12;
   };
@@ -269,12 +270,8 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
   }
 
   // 15. Attachments Table (Annexures)
-  const attachmentRows = Object.entries(attachments || {})
-    .filter(([key, file]) => file && file.id)
-    .map(([key, file]) => [DOC_LABELS[key] || key, 'Attached']);
-
   if (attachmentRows.length > 0) {
-    if (currentY > 200) { doc.addPage(); currentY = 20; }
+    if (currentY > 200) { doc.addPage(); currentY = 60; }
     doc.setFontSize(13);
     doc.setTextColor(44, 62, 80);
     doc.text('15. ANNEXURES (ATTACHED DOCUMENTS)', 20, currentY);
@@ -287,13 +284,13 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
       theme: 'grid',
       headStyles: { fillColor: [52, 152, 219], textColor: [255, 255, 255] },
       styles: { fontSize: 9, cellPadding: 2.5 },
-      margin: { left: 20, right: 20 }
+      margin: { left: 20, right: 20, top: 60 }
     });
     currentY = doc.lastAutoTable.finalY + 12;
   }
 
   // Final Signature Page for the Application form
-  if (currentY > 210) { doc.addPage(); currentY = 30; }
+  if (currentY > 210) { doc.addPage(); currentY = 70; }
   doc.setFontSize(11);
   doc.setTextColor(50);
   doc.text("I hereby certify that all information provided above is correct and verified against original records.", 20, currentY);
@@ -393,7 +390,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
             const { height } = page.getSize();
             page.drawText(`ANNEXURE: ${DOC_LABELS[key]} | Hospital: ${form.name} | Ref: ${refId} | Page ${idx + 1}`, {
               x: 20,
-              y: height - 20,
+              y: height - 65,
               size: 8,
               font: courierFont,
               color: rgb(0.8, 0, 0),
@@ -408,17 +405,17 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
           const page = finalPdf.addPage();
           const { width, height } = page.getSize();
 
-          const dims = image.scaleToFit(width - 80, height - 120);
+          const dims = image.scaleToFit(width - 80, height - 180);
           page.drawImage(image, {
             x: (width - dims.width) / 2,
-            y: (height - dims.height) / 2,
+            y: (height - dims.height) / 2 - 40,
             width: dims.width,
             height: dims.height,
           });
 
           page.drawText(`ANNEXURE: ${DOC_LABELS[key]} | Hospital: ${form.name} | Ref: ${refId}`, {
             x: 20,
-            y: height - 20,
+            y: height - 65,
             size: 10,
             font: courierFont,
             color: rgb(0.8, 0, 0),

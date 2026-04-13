@@ -13,7 +13,7 @@ export function Step5({ form, setForm, errors = {} }) {
                 <Info size={16} />
                 <div className="alert-content">
                     <p>Has to upload signed declaration for the same.</p>
-                    <a href="/api/forms/declaration-template-diagnostics.pdf" className="download-form-link" download>
+                    <a href="/templates/Draft declaration.docx" className="download-form-link" download>
                         <Download size={14} /> Download Declaration Form
                     </a>
                 </div>

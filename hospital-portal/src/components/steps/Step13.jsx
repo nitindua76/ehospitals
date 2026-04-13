@@ -73,7 +73,7 @@ export function Step13({ form, attachedFiles, setAttachedFiles }) {
         ...(form.pollution_control_certificate === 'Yes' ? [{ key: 'pollution_control', label: 'Pollution Control Cert.', required: true }] : []),
         ...(form.lift_safety_clearance === 'Yes' ? [{ key: 'lift_safety', label: 'Lift Safety Clearance', required: true }] : []),
         ...(form.cea_registration === 'Yes' ? [{ key: 'cea_registration', label: 'CEA Registration Certificate', required: true }] : []),
-        { key: 'bank_ecs', label: 'Bank/ECS Details (Signed)', required: true, download: '/templates/bank_ecs_template.pdf' },
+        { key: 'bank_ecs', label: 'Bank/ECS Details (Signed)', required: true, download: '/templates/ECS Mandate Form.pdf' },
         ...(form.mri_scan === 'Outsourced' ? [{ key: 'mri_declaration', label: 'MRI Outsourced Declaration', required: true }] : []),
         ...(form.pet_ct_scan === 'Outsourced' ? [{ key: 'pet_ct_declaration', label: 'PET-CT Outsourced Declaration', required: true }] : []),
     ];
