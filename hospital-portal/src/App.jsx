@@ -44,7 +44,8 @@ const defaultForm = {
     specialties: [],
     capacity: { general: '', semi_private: '', private: '', private_single_ac: '', private_deluxe_ac: '', private_suite: '', icu: '', hdu: '' }, total_beds: '', tariffs_attached: 'No',
     pathology_lab: 'No', radiology_services: 'No', pharmacy_24x7: 'No', trauma_support_24x7: 'No', corporate_help_desk: 'No', ambulance_facility: 'No', ambulance_free_pickup: 'No',
-    bank_name: '', account_no: '', ifsc_code: '', ecs_mandate_attached: 'No', it_exemption: 'No', it_exemption_permanent: 'No', it_exemption_valid_until: '',
+    schedule_of_charges_attached: '',
+    bank_name: '', account_no: '', ifsc_code: '', ecs_mandate_attached: '', it_exemption: '', it_exemption_permanent: 'No', it_exemption_valid_until: '',
     date_of_inception: '', panel_organizations: [], tpa_tieups: [],
     signatory_name: '', signatory_designation: '', signatory_date: '',
     cghs_rates_acceptable: '', ongc_discount_percent: '', ongc_association: 'No', ongc_association_years: '', ongc_vendor_code: '', ongc_patient_count: { fy_22_23: '', fy_23_24: '', fy_24_25: '' },
@@ -183,6 +184,11 @@ export default function App() {
             if (nodalErrors.length > 0) e.nodal_contacts = nodalErrors[0]
         }
         if (s === 3) {
+            if (!formData.bank_name?.trim()) e.bank_name = 'Bank name required';
+            if (!formData.account_no?.trim()) e.account_no = 'Account number required';
+            if (!formData.ifsc_code?.trim()) e.ifsc_code = 'IFSC code required';
+            if (!formData.ecs_mandate_attached) e.ecs_mandate_attached = 'Please select ECS mandate status';
+            if (!formData.it_exemption) e.it_exemption = 'Please select IT exemption status';
             if (formData.it_exemption === 'Yes' && formData.it_exemption_permanent !== 'Yes' && !formData.it_exemption_valid_until) {
                 e.it_exemption_valid_until = 'Exemption validity date required'
             }
@@ -203,10 +209,12 @@ export default function App() {
         }
         if (s === 15) {
             if (!formData.cghs_rates_acceptable) e.cghs_rates_acceptable = 'Please confirm CGHS rates acceptability'
+            if (!formData.schedule_of_charges_attached) e.schedule_of_charges_attached = 'Please select Schedule of Charges status'
             if (!String(formData.ongc_discount_percent || '').trim()) e.ongc_discount_percent = 'Discount percentage required'
         }
         if (s === 13) {
-            const reqKeys = ['pan', 'gst', 'bank_ecs'];
+            const reqKeys = ['pan', 'gst', 'bank_ecs', 'room_tariffs'];
+            if (formData.schedule_of_charges_attached === 'Yes') reqKeys.push('schedule_of_charges');
             if (formData.msme_status === 'Yes') reqKeys.push('mse_certificate');
             if (formData.nabh_accredited === 'Yes') reqKeys.push('nabh_certificate');
             if (formData.nabl_accredited === 'Yes') reqKeys.push('nabl_certificate');

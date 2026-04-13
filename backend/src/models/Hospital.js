@@ -46,7 +46,7 @@ const hospitalSchema = new mongoose.Schema({
     bank_name: { type: String, trim: true },
     account_no: { type: String, trim: true },
     ifsc_code: { type: String, trim: true },
-    ecs_mandate_attached: { type: Boolean, default: false }
+    ecs_mandate_attached: { type: String, enum: ['Yes', 'No'] } // No default to force manual selection
   },
   date_of_inception: { type: Date },
   panel_organizations: [{
@@ -63,8 +63,8 @@ const hospitalSchema = new mongoose.Schema({
   },
   accreditation_valid_until: Date,
   accreditation_attached: { type: Boolean, default: false },
-  it_exemption: { type: String, enum: ['Yes', 'No'], default: 'No' },
-  it_exemption_permanent: { type: String, enum: ['Yes', 'No'], default: 'No' },
+  it_exemption: { type: String, enum: ['Yes', 'No'] }, // No default
+  it_exemption_permanent: { type: String, enum: ['Yes', 'No'] }, // No default
   it_exemption_valid_until: Date,
   it_exemption_attached: { type: Boolean, default: false },
   statutory_clearances: {
@@ -149,7 +149,7 @@ const hospitalSchema = new mongoose.Schema({
   // SECTION H: COMMERCIAL TERMS
   cghs_rates_acceptable: { type: String, enum: ['Yes', 'No'], default: 'No' },
   ongc_discount_percent: { type: Number, default: 0 },
-  schedule_of_charges_attached: { type: Boolean, default: false },
+  schedule_of_charges_attached: { type: String, enum: ['Yes', 'No'] }, // String to support 3-state toggle
 
   // SECTION I: EXPERIENCE & ASSOCIATION
   date_of_inception: { type: Date },
@@ -221,6 +221,7 @@ const hospitalSchema = new mongoose.Schema({
     cea_registration: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
     bank_ecs: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
     tariff: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
+    room_tariffs: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
     mri_declaration: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' },
     pet_ct_declaration: { type: mongoose.Schema.Types.ObjectId, ref: 'fs.files' }
   },

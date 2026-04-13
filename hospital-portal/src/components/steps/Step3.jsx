@@ -13,13 +13,13 @@ export function Step3({ form, setForm }) {
                 <h4>Bank Details</h4>
             </div>
             <div className="form-grid-3 full-width">
-                <Field label="Bank Name" name="bank_name" form={form} setForm={setForm} />
-                <Field label="Account Number" name="account_no" form={form} setForm={setForm} />
-                <Field label="IFSC Code" name="ifsc_code" form={form} setForm={setForm} />
+                <Field label="Bank Name" name="bank_name" required form={form} setForm={setForm} />
+                <Field label="Account Number" name="account_no" required form={form} setForm={setForm} />
+                <Field label="IFSC Code" name="ifsc_code" required form={form} setForm={setForm} />
             </div>
             <div className="form-grid-3 full-width" style={{ marginTop: '12px' }}>
-                <Toggle label="ECS Mandate form attached?" name="ecs_mandate_attached" form={form} setForm={setForm} />
-                <Toggle label="Income Tax Exemption (80G / 12A)?" name="it_exemption" form={form} setForm={setForm} />
+                <Toggle label="ECS Mandate form attached?" name="ecs_mandate_attached" required form={form} setForm={setForm} />
+                <Toggle label="Income Tax Exemption (80G / 12A)?" name="it_exemption" required form={form} setForm={setForm} />
                 
                 {form.it_exemption === 'Yes' && (
                     <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

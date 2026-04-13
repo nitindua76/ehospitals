@@ -39,7 +39,7 @@ export function Step13({ form, attachedFiles, setAttachedFiles }) {
             alert('Failed to remove file from server: ' + (err.response?.data?.error || err.message));
         }
     };
-    
+
     const downloadFile = async (fileId, fileName) => {
         const token = sessionStorage.getItem('token');
         try {
@@ -74,6 +74,8 @@ export function Step13({ form, attachedFiles, setAttachedFiles }) {
         ...(form.lift_safety_clearance === 'Yes' ? [{ key: 'lift_safety', label: 'Lift Safety Clearance', required: true }] : []),
         ...(form.cea_registration === 'Yes' ? [{ key: 'cea_registration', label: 'CEA Registration Certificate', required: true }] : []),
         { key: 'bank_ecs', label: 'Bank/ECS Details (Signed)', required: true, download: '/templates/ECS Mandate Form.pdf' },
+        { key: 'room_tariffs', label: 'Available Room categories with Tariffs and Facilities', required: true },
+        ...(form.schedule_of_charges_attached === 'Yes' ? [{ key: 'schedule_of_charges', label: 'General Public Schedule of Charges', required: true }] : []),
         ...(form.mri_scan === 'Outsourced' ? [{ key: 'mri_declaration', label: 'MRI Outsourced Declaration', required: true }] : []),
         ...(form.pet_ct_scan === 'Outsourced' ? [{ key: 'pet_ct_declaration', label: 'PET-CT Outsourced Declaration', required: true }] : []),
     ];
@@ -103,9 +105,9 @@ export function Step13({ form, attachedFiles, setAttachedFiles }) {
                                 <Loader2 className="spinner" size={18} />
                             ) : attachedFiles[doc.key] ? (
                                 <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button 
-                                        className="check-doc" 
-                                        onClick={() => downloadFile(attachedFiles[doc.key].id, `${doc.label.replace(/[^a-z0-9]/gi, '_')}.pdf`)} 
+                                    <button
+                                        className="check-doc"
+                                        onClick={() => downloadFile(attachedFiles[doc.key].id, `${doc.label.replace(/[^a-z0-9]/gi, '_')}.pdf`)}
                                         title="Download & Check"
                                         style={{ color: '#3498db', background: 'rgba(52, 152, 219, 0.1)', border: 'none', padding: '6px', borderRadius: '4px', cursor: 'pointer' }}
                                     >

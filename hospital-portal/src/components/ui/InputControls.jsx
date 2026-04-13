@@ -44,10 +44,14 @@ export function Field({ label, name, type = 'text', form, setForm, min, max, ste
 }
 
 export function Toggle({ label, name, form, setForm, hint, required, error }) {
-    const active = form[name] === 'Yes';
+    const value = form[name]; // 'Yes', 'No', or '' / null
+    // Be very strict: only 'Yes' or 'No' count as selected. Anything else (undefined, null, false, '') is neutral.
+    const isSelected = value === 'Yes' || value === 'No';
+    const active = value === 'Yes';
+    
     return (
         <motion.div
-            className={`toggle-group ${error ? 'error' : ''}`}
+            className={`toggle-group ${error ? 'error' : ''} ${!isSelected ? 'unselected' : ''}`}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
@@ -55,15 +59,22 @@ export function Toggle({ label, name, form, setForm, hint, required, error }) {
             <div className="toggle-header">
                 <span className="form-label">
                     {label} {required && <span className="required">*</span>}
+                    {!isSelected && <span className="selection-pending">(Select Yes/No)</span>}
                 </span>
                 <button
                     type="button"
-                    className={`toggle-switch ${active ? 'active' : ''}`}
-                    onClick={() => setForm({ ...form, [name]: active ? 'No' : 'Yes' })}
+                    className={`toggle-switch ${active ? 'active' : ''} ${!isSelected ? 'neutral' : ''}`}
+                    onClick={() => {
+                        // If unselected, default to Yes on first click, otherwise toggle
+                        const nextValue = !isSelected ? 'Yes' : (active ? 'No' : 'Yes');
+                        setForm({ ...form, [name]: nextValue });
+                    }}
                 >
                     <motion.div
                         className="toggle-knob"
-                        animate={{ x: active ? 24 : 0 }}
+                        animate={{ 
+                            x: !isSelected ? 12 : (active ? 24 : 0) 
+                        }}
                         transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                     />
                 </button>

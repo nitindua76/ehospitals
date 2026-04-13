@@ -35,6 +35,18 @@ export function Step15({ form, setForm, errors }) {
                     hint="Please confirm if your hospital accepts the standard CGHS rate list."
                 />
 
+                <div style={{ marginTop: '20px' }}>
+                    <Toggle
+                        label="General Public Schedule of Charges (Enclosed/ not enclosed)?"
+                        name="schedule_of_charges_attached"
+                        form={form}
+                        setForm={setForm}
+                        required={true}
+                        error={errors?.schedule_of_charges_attached}
+                        hint="If enclosed, you will need to upload the document in Step M."
+                    />
+                </div>
+
                 <div className="form-group" style={{ marginTop: '24px' }}>
                     <label className="form-label">
                         Please mention the discounts which you would be offering to ONGC over and above the general public rates. <span className="required">*</span>
