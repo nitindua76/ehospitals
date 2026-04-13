@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Trophy, LineChart, Scale, Settings, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Trophy, LineChart, Scale, Settings, LogOut, Shield, Database } from 'lucide-react';
 
 export function Sidebar({ currentView, setView, onLogout }) {
     const MENU_ITEMS = [
@@ -9,6 +9,7 @@ export function Sidebar({ currentView, setView, onLogout }) {
         { id: 'analytics', label: 'Analytics', icon: <LineChart size={20} /> },
         { id: 'compare', label: 'Comparison', icon: <Scale size={20} /> },
         { id: 'weights', label: 'Scoring', icon: <Settings size={20} /> },
+        { id: 'system', label: 'System', icon: <Database size={20} /> },
     ];
 
     return (

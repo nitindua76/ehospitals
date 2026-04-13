@@ -35,7 +35,7 @@ app.use(cors({
     },
     credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // General limiter
@@ -62,6 +62,7 @@ app.use('/api/hospital-auth', require('./routes/hospitalAuth')); // Hospital aut
 app.use('/api/hospitals', require('./routes/hospitals'));
 app.use('/api/scoring', require('./routes/scoring'));
 app.use('/api/export', require('./routes/export'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

@@ -127,13 +127,13 @@ router.post('/rank', auth, async (req, res) => {
 router.get('/factors', auth, (req, res) => {
     res.json({
         factors: [
-            { key: 'patient_outcomes', label: 'Patient Outcomes', description: 'Outcome scores, surgery success, mortality & readmission rates', color: '#6366f1' },
-            { key: 'infrastructure', label: 'Infrastructure', description: 'Bed capacity, ICU ratio, OT rooms, specialties & facilities', color: '#10b981' },
-            { key: 'staff_quality', label: 'Staff Quality', description: 'Doctor-to-bed ratio, specialist count, experience average', color: '#f59e0b' },
-            { key: 'financial_health', label: 'Financial Health', description: 'Revenue, cost efficiency, insurance tie-ups, debt ratio', color: '#ef4444' },
-            { key: 'technology', label: 'Technology Adoption', description: 'EMR, telemedicine, AI tools, robotic surgery, IoT monitoring', color: '#8b5cf6' },
-            { key: 'patient_satisfaction', label: 'Patient Satisfaction', description: 'Satisfaction score, complaint resolution, wait times, infection control', color: '#06b6d4' },
-            { key: 'accreditation', label: 'Accreditation & Compliance', description: 'NABH, JCI, NABL, ISO certifications', color: '#f97316' },
+            { key: 'patient_outcomes', label: 'Patient Volume & Outcomes', description: 'Historical patient traffic from ONGC and outcome proxies', color: '#6366f1' },
+            { key: 'infrastructure', label: 'Infrastructure & Bed Capacity', description: 'Total beds, ICU ratio, OT rooms and general facilities', color: '#10b981' },
+            { key: 'staff_quality', label: 'Staff Quality & Experience', description: 'Doctor-to-bed ratio, specialist count, and clinical experience', color: '#f59e0b' },
+            { key: 'financial_health', label: 'Financial Commitments', description: 'CGHS rate acceptance, ONGC discounts, and bank connectivity', color: '#ef4444' },
+            { key: 'technology', label: 'Technology & Diagnostics', description: 'Diagnostic capabilities (MRI, CT) and medical tech adoption', color: '#8b5cf6' },
+            { key: 'patient_satisfaction', label: 'Patient Experience', description: 'Feedback mechanisms and past patient satisfaction indicators', color: '#06b6d4' },
+            { key: 'accreditation', label: 'Accreditation & Compliance', description: 'NABH, JCI, NABL, and critical statutory clearances', color: '#f97316' },
         ]
     });
 });

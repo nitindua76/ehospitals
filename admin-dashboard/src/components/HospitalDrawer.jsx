@@ -38,8 +38,9 @@ export function HospitalDrawer({ hospital, onClose, onToggleSelect, downloadFile
                                 <span className="score-lbl">Score</span>
                             </div>
                             <div className="h-identity">
-                                <h2>{hospital.name}</h2>
-                                <p><MapPin size={14} style={{ marginRight: 4 }} /> {hospital.address}, {hospital.city}, {hospital.state}</p>
+                                <h2>{hospital.name || 'Unnamed Facility'}</h2>
+                                {hospital.brand_name && <p className="h-b-p">Brand Identifier: {hospital.brand_name}</p>}
+                                <p><MapPin size={14} style={{ marginRight: 4 }} /> {hospital.address || 'Address N/A'}, {hospital.city}, {hospital.state}</p>
                             </div>
                         </div>
                         <button className="close-drawer-btn" onClick={onClose}><X size={20} /></button>

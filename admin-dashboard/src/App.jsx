@@ -9,8 +9,10 @@ import { DashboardView } from './components/DashboardView'
 import { RankingView } from './components/RankingView'
 import { AnalyticsView, CompareView } from './components/AnalyticsView'
 import { WeightsView } from './components/WeightsView'
+import { SystemView } from './components/SystemView'
 import { HospitalDrawer } from './components/HospitalDrawer'
 import { LoginPage } from './components/LoginPage'
+import { generateHospitalPDF } from './utils/pdfGenerator'
 
 // Error Boundary for UI Safety
 class ErrorBoundary extends Component {
@@ -175,6 +177,31 @@ function AdminApp() {
         } catch { fetchData() }
     }
 
+    const revertSubmission = async (id) => {
+        if (!window.confirm('Are you sure you want to REVERT this submission to Draft? The hospital will be able to edit their application again.')) return;
+        try {
+            await api.patch(`/hospitals/${id}/revert`);
+            showToast('Submission reverted to Draft');
+            fetchData();
+        } catch (e) {
+            showToast(e.response?.data?.error || 'Revert failed', 'error');
+        }
+    }
+
+    const downloadApplication = async (h) => {
+        showToast(`Preparing application package for ${h.name}...`, 'info');
+        try {
+            // RefId is often _id or a dedicated field
+            const refId = h.refId || h._id.slice(-8).toUpperCase();
+            await generateHospitalPDF(h, refId, h.attachments, sessionStorage.getItem('token'), API, (p) => {
+                if (p === 100) showToast('Download complete');
+            });
+        } catch (e) {
+            console.error(e);
+            showToast('Failed to generate application package', 'error');
+        }
+    }
+
     const exportCSV = () => downloadFile('/export/csv', 'hospitals_audit.csv')
     const exportSelected = () => downloadFile('/export/selected', 'selected_panel.csv')
 
@@ -191,7 +218,7 @@ function AdminApp() {
 
     if (!token) return <LoginPage onLogin={(t) => { sessionStorage.setItem('token', t); setToken(t) }} />
 
-    const viewTitles = { dashboard: 'Strategic Overview', ranking: 'Hospital Registers', analytics: 'Data Intelligence', compare: 'Side-by-Side Analysis', weights: 'Scoring Control' };
+    const viewTitles = { dashboard: 'Strategic Overview', ranking: 'Hospital Registers', analytics: 'Data Intelligence', compare: 'Side-by-Side Analysis', weights: 'Scoring Control', system: 'System Maintenance' };
 
     return (
         <div className="dashboard-layout">
@@ -230,6 +257,8 @@ function AdminApp() {
                                 setCompareList(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
                                 showToast(compareList.includes(id) ? 'Removed from Sandbox' : 'Added to Sandbox')
                             }}
+                            onDownload={downloadApplication}
+                            onRevert={revertSubmission}
                         />
                     )}
                     {view === 'analytics' && <AnalyticsView hospitals={hospitals} />}
@@ -255,6 +284,7 @@ function AdminApp() {
                             onPreset={(k) => { setWeights(PRESETS[k]); rerank(PRESETS[k]) }}
                         />
                     )}
+                    {view === 'system' && <SystemView api={api} />}
                 </div>
 
                 {selectedHospital && (

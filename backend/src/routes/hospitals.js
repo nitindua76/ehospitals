@@ -109,6 +109,28 @@ router.patch('/:id/select', auth, async (req, res) => {
     }
 });
 
+// PATCH /api/hospitals/:id/revert — Admin: reset submission status
+router.patch('/:id/revert', auth, async (req, res) => {
+    try {
+        const hospital = await Hospital.findByIdAndUpdate(
+            req.params.id,
+            { 
+                has_submitted: false,
+                status: 'draft',
+                current_step: 1 // Force portal to land on Step 1 after login
+            },
+            { new: true, runValidators: false }
+        );
+        
+        if (!hospital) return res.status(404).json({ error: 'Hospital not found' });
+        
+        res.json({ success: true, message: 'Submission reverted to draft status' });
+    } catch (err) {
+        console.error('❌ Revert Error:', err);
+        res.status(500).json({ error: 'Revert failed: ' + err.message });
+    }
+});
+
 // PATCH /api/hospitals/:id/status — Update status and notes
 router.patch('/:id/status', auth, async (req, res) => {
     try {
