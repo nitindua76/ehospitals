@@ -89,7 +89,7 @@ router.put('/me', hospitalAuth, async (req, res) => {
             pan_attached, gst_attached, accreditation_attached, fire_safety_attached,
             bank_ecs_attached, tariff_attached, biomedical_attached, pharmacy_attached,
             msme_attached, it_exemption_attached, panel_organizations_attached,
-            patient_feedbacks_attached, schedule_of_charges_attached,
+            patient_feedbacks_attached,
             ...rawUpdateData
         } = req.body;
 
@@ -170,7 +170,7 @@ router.put('/me', hospitalAuth, async (req, res) => {
         if (rawUpdateData.bank_name !== undefined) updateData['bank_details.bank_name'] = rawUpdateData.bank_name;
         if (rawUpdateData.account_no !== undefined) updateData['bank_details.account_no'] = rawUpdateData.account_no;
         if (rawUpdateData.ifsc_code !== undefined) updateData['bank_details.ifsc_code'] = rawUpdateData.ifsc_code;
-        if (rawUpdateData.ecs_mandate_attached !== undefined) updateData['bank_details.ecs_mandate_attached'] = toBool(rawUpdateData.ecs_mandate_attached);
+        if (rawUpdateData.ecs_mandate_attached !== undefined) updateData['bank_details.ecs_mandate_attached'] = rawUpdateData.ecs_mandate_attached;
 
         // Signatory
         if (rawUpdateData.signatory_name !== undefined) updateData['authorized_signatory.name'] = rawUpdateData.signatory_name;
@@ -299,10 +299,11 @@ router.post('/upload', hospitalAuth, upload.single('file'), async (req, res) => 
         console.log(`✅ /upload: File streamed to GridFS with ID: ${fileId}`);
 
         // Update hospital document
+        const isStringField = field === 'schedule_of_charges';
         await Hospital.findByIdAndUpdate(req.hospital.id, {
             $set: {
                 [`attachments.${field}`]: fileId,
-                [`${field}_attached`]: true
+                [`${field}_attached`]: isStringField ? 'Yes' : true
             }
         });
 
