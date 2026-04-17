@@ -18,56 +18,64 @@ const streamToBuffer = (stream) => {
     });
 };
 
-// GET /api/admin/db/backup — Admin: Download full JSON backup of hospitals + attachments
+// GET /api/admin/db/backup — Admin: Download full JSON/Gzipped backup via Cursor Streaming
 router.get('/db/backup', auth, async (req, res) => {
     try {
-        console.log('⏳ Starting full system backup (Metadata + Binaries)...');
-        const hospitals = await Hospital.find().lean();
-        
-        // Fetch GridFS Files
-        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
-        const filesMetadata = await mongoose.connection.db.collection('uploads.files').find().toArray();
-        
-        const backupFiles = [];
-        for (const fileDoc of filesMetadata) {
-            try {
-                const buffer = await streamToBuffer(bucket.openDownloadStream(fileDoc._id));
-                backupFiles.push({
-                    metadata: fileDoc,
-                    data: buffer.toString('base64')
-                });
-            } catch (fileErr) {
-                console.warn(`⚠️ Skipping file ${fileDoc._id} due to read error:`, fileErr.message);
-            }
-        }
+        console.log('⏳ Starting Production-Grade Streaming Backup...');
 
-        const backup = {
-            version: '2.0', // Incremented version for binary support
-            timestamp: new Date().toISOString(),
-            corps: 'HOSPITAL_EMPANELMENT',
-            data: {
-                hospitals,
-                files: backupFiles
-            }
-        };
-
-        console.log(`✅ Backup complete: ${hospitals.length} hospitals, ${backupFiles.length} files. Starting compression...`);
-        
-        const backupString = JSON.stringify(backup);
-        
+        // 1. Setup Compression & Headers
         res.setHeader('Content-disposition', `attachment; filename=hospital_vault_backup_${new Date().toISOString().split('T')[0]}.json.gz`);
         res.setHeader('Content-type', 'application/x-gzip');
         res.setHeader('Content-Encoding', 'gzip');
+        res.setHeader('X-Accel-Buffering', 'no'); // Disable Nginx buffering
 
-        // Stream compressed data
         const gzip = zlib.createGzip({ level: 9 });
-        streamifier.createReadStream(backupString).pipe(gzip).pipe(res);
+        gzip.pipe(res);
+
+        // 2. Write Header Metadata
+        gzip.write(`{"version":"2.0","timestamp":"${new Date().toISOString()}","corps":"HOSPITAL_EMPANELMENT","data":{"hospitals":[`);
+
+        // 3. Stream Hospitals via Cursor
+        const hospitalCursor = Hospital.find().cursor();
+        let isFirstHosp = true;
+        for await (const hosp of hospitalCursor) {
+            if (!isFirstHosp) gzip.write(',');
+            gzip.write(JSON.stringify(hosp));
+            isFirstHosp = false;
+        }
+
+        gzip.write('],"files":[');
+
+        // 4. Stream GridFS Files Metadata + Content
+        const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+        const filesMetadata = await mongoose.connection.db.collection('uploads.files').find().toArray();
         
+        let isFirstFile = true;
+        for (const fileDoc of filesMetadata) {
+            try {
+                if (!isFirstFile) gzip.write(',');
+                // Process content as buffer (In-Memory but one-at-a-time is safe)
+                const buffer = await streamToBuffer(bucket.openDownloadStream(fileDoc._id));
+                const record = {
+                    metadata: fileDoc,
+                    data: buffer.toString('base64')
+                };
+                gzip.write(JSON.stringify(record));
+                isFirstFile = false;
+            } catch (fileErr) {
+                console.warn(`⚠️ skipping file ${fileDoc._id}:`, fileErr.message);
+            }
+        }
+
+        // 5. Finalize JSON & Stream
+        gzip.write(']}}');
+        gzip.end();
+
+        console.log('✅ Streaming backup dispatched to client.');
     } catch (err) {
-        console.error('❌ Backup Failure:', err);
-        // If headers haven't been sent, send error JSON
+        console.error('❌ Streaming Backup Failure:', err);
         if (!res.headersSent) {
-            res.status(500).json({ error: 'Backup failed: ' + err.message });
+            res.status(500).json({ error: 'Streaming Backup failed: ' + err.message });
         }
     }
 });
@@ -82,10 +90,14 @@ router.post('/db/restore', auth, upload.single('backup'), async (req, res) => {
             console.log(`⏳ Received backup file: ${req.file.originalname} (${req.file.size} bytes)`);
             let fileBuffer = req.file.buffer;
             
-            // Auto-decompress if it's a GZIP file
-            if (req.file.originalname.endsWith('.gz') || req.file.mimetype === 'application/x-gzip') {
-                console.log('   - Decompressing Gzip payload...');
+            // MAGIC BYTE DETECTION (Gzip signature: 1f 8b)
+            const isGzip = fileBuffer.length > 2 && fileBuffer[0] === 0x1f && fileBuffer[1] === 0x8b;
+            
+            if (isGzip) {
+                console.log('   - Gzip signature detected (1f 8b). Decompressing...');
                 fileBuffer = zlib.gunzipSync(fileBuffer);
+            } else {
+                console.log('   - Plain text backup detected.');
             }
             
             backupData = JSON.parse(fileBuffer.toString());
@@ -94,8 +106,10 @@ router.post('/db/restore', auth, upload.single('backup'), async (req, res) => {
             backupData = req.body.data || req.body;
         }
 
-        const hospitalsArray = backupData.hospitals;
-        const filesArray = backupData.files || [];
+        // Support both nested (new) and flat (legacy) formats
+        const finalData = backupData.data || backupData;
+        const hospitalsArray = finalData.hospitals;
+        const filesArray = finalData.files || [];
 
         if (!hospitalsArray || !Array.isArray(hospitalsArray)) {
             return res.status(400).json({ error: 'Invalid backup format: No hospitals array found' });

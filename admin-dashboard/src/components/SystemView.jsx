@@ -160,6 +160,12 @@ export function SystemView({ api }) {
                     </div>
                     <div className="system-notice">
                         <p>Database management actions are logged under the current administrative session ID for audit purposes.</p>
+                        {loading && (
+                            <div className="critical-warning pulse">
+                                <AlertTriangle size={14} />
+                                <span>CRITICAL: Operation in progress. Do not close or refresh the dashboard.</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
