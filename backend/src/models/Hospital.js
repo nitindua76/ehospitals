@@ -14,7 +14,7 @@ const hospitalSchema = new mongoose.Schema({
   gst_number: { type: String, trim: true },
   gst_attached: { type: Boolean, default: false },
   msme_status: { type: String, enum: ['Yes', 'No'], default: 'No' },
-  msme_type: { type: String, enum: ['Micro', 'Small', 'Medium', 'None'], default: 'None' },
+  msme_type: { type: String, enum: ['Micro', 'Small', 'Medium', 'None'], default: 'None', set: v => v ? (v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()) : 'None' },
   msme_attached: { type: Boolean, default: false },
   type: { type: String, enum: ['Single-Specialty', 'Multi-Specialty', 'Eye-Bank', 'EyeCare Center', 'Diagnostic-Center'], required: true },
   ownership_type: { type: String, enum: ['Government', 'Private', 'Private/Corporate', 'Trust', 'Corporate'], default: 'Private' },

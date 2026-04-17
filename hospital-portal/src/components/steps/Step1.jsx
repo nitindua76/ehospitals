@@ -17,7 +17,7 @@ export function Step1({ form, setForm, errors }) {
             <div className="form-group full-width">
                 <label className="form-label">Hospital Type <span className="required">*</span></label>
                 <div className="radio-group-modern">
-                    {['Single-Specialty', 'Multi-Specialty', 'EyeCare Center', 'Diagnostic-Center'].map(t => (
+                    {['Single-Specialty', 'Multi-Specialty', 'Eye-Bank', 'EyeCare Center', 'Diagnostic-Center'].map(t => (
                         <button
                             key={t}
                             type="button"
@@ -34,7 +34,7 @@ export function Step1({ form, setForm, errors }) {
             <div className="form-group full-width">
                 <label className="form-label">Sector / Category <span className="required">*</span></label>
                 <div className="radio-group-modern">
-                    {['Government', 'Private/Corporate', 'Trust'].map(t => (
+                    {['Government', 'Private', 'Private/Corporate', 'Trust', 'Corporate'].map(t => (
                         <button
                             key={t}
                             type="button"
@@ -59,7 +59,15 @@ export function Step1({ form, setForm, errors }) {
                     {errors.msme_status && <span className="error-text">{errors.msme_status}</span>}
                 </div>
                 {form.msme_status === 'Yes' && (
-                    <Field label="MSE Category" name="msme_type" form={form} setForm={setForm} required error={errors.msme_type} />
+                    <div className="form-group">
+                        <label className="form-label">MSE Category <span className="required">*</span></label>
+                        <div className="radio-group-modern">
+                            {['Micro', 'Small', 'Medium'].map(v => (
+                                <button key={v} type="button" className={`radio-btn ${form.msme_type === v ? 'active' : ''}`} onClick={() => setForm({ ...form, msme_type: v })}>{v}</button>
+                            ))}
+                        </div>
+                        {errors.msme_type && <span className="error-text">{errors.msme_type}</span>}
+                    </div>
                 )}
             </div>
         </StepLayout>
