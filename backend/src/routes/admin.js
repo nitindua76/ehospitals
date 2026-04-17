@@ -4,6 +4,9 @@ const Hospital = require('../models/Hospital');
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
 const streamifier = require('streamifier');
+const zlib = require('zlib');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Helper to convert stream to buffer
 const streamToBuffer = (stream) => {
@@ -48,21 +51,49 @@ router.get('/db/backup', auth, async (req, res) => {
             }
         };
 
-        console.log(`✅ Backup complete: ${hospitals.length} hospitals, ${backupFiles.length} files.`);
-        res.setHeader('Content-disposition', `attachment; filename=hospital_vault_backup_${new Date().toISOString().split('T')[0]}.json`);
-        res.setHeader('Content-type', 'application/json');
-        res.send(JSON.stringify(backup, null, 2));
+        console.log(`✅ Backup complete: ${hospitals.length} hospitals, ${backupFiles.length} files. Starting compression...`);
+        
+        const backupString = JSON.stringify(backup);
+        
+        res.setHeader('Content-disposition', `attachment; filename=hospital_vault_backup_${new Date().toISOString().split('T')[0]}.json.gz`);
+        res.setHeader('Content-type', 'application/x-gzip');
+        res.setHeader('Content-Encoding', 'gzip');
+
+        // Stream compressed data
+        const gzip = zlib.createGzip({ level: 9 });
+        streamifier.createReadStream(backupString).pipe(gzip).pipe(res);
+        
     } catch (err) {
         console.error('❌ Backup Failure:', err);
-        res.status(500).json({ error: 'Backup failed: ' + err.message });
+        // If headers haven't been sent, send error JSON
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Backup failed: ' + err.message });
+        }
     }
 });
 
-// POST /api/admin/db/restore — Admin: Restore from JSON backup (Full Fidelity)
-router.post('/db/restore', auth, async (req, res) => {
+// POST /api/admin/db/restore — Admin: Restore from JSON/Gzip backup (Full Fidelity)
+router.post('/db/restore', auth, upload.single('backup'), async (req, res) => {
     try {
-        const payload = req.body;
-        const backupData = payload.data || payload; // Support both wrapped and unwrapped formats
+        let backupData;
+
+        // Extract backup data based on input type (Multer file or Legacy JSON body)
+        if (req.file) {
+            console.log(`⏳ Received backup file: ${req.file.originalname} (${req.file.size} bytes)`);
+            let fileBuffer = req.file.buffer;
+            
+            // Auto-decompress if it's a GZIP file
+            if (req.file.originalname.endsWith('.gz') || req.file.mimetype === 'application/x-gzip') {
+                console.log('   - Decompressing Gzip payload...');
+                fileBuffer = zlib.gunzipSync(fileBuffer);
+            }
+            
+            backupData = JSON.parse(fileBuffer.toString());
+        } else {
+            console.log('⏳ Received legacy JSON backup payload');
+            backupData = req.body.data || req.body;
+        }
+
         const hospitalsArray = backupData.hospitals;
         const filesArray = backupData.files || [];
 

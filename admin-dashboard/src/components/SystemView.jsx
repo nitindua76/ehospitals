@@ -9,17 +9,21 @@ export function SystemView({ api }) {
 
     const handleBackup = async () => {
         setLoading(true);
+        setMessage(null);
         try {
             const response = await api.get('/admin/db/backup', { responseType: 'blob' });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/x-gzip' }));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `hospital_empanelment_backup_${new Date().toISOString().split('T')[0]}.json`);
+            const date = new Date().toISOString().split('T')[0];
+            link.setAttribute('download', `hospital_system_backup_${date}.json.gz`);
             document.body.appendChild(link);
             link.click();
-            setMessage({ type: 'success', text: 'Backup downloaded successfully.' });
+            document.body.removeChild(link);
+            setMessage({ type: 'success', text: 'Compressed backup (.json.gz) downloaded successfully.' });
         } catch (err) {
-            setMessage({ type: 'error', text: 'Backup failed: ' + err.message });
+            console.error('Backup Error:', err);
+            setMessage({ type: 'error', text: 'Backup failed. This may be blocked by local antivirus or a connection timeout.' });
         } finally {
             setLoading(false);
         }
@@ -29,21 +33,35 @@ export function SystemView({ api }) {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!window.confirm('WARNING: Restoration will overwrite existing records. Proceed?')) return;
+        const isGzip = file.name.endsWith('.gz');
+        const msg = isGzip 
+            ? 'WARNING: This will overwrite ALL existing records with the compressed backup. Proceed?'
+            : 'WARNING: This will overwrite ALL existing records. Proceed?';
+
+        if (!window.confirm(msg)) {
+            e.target.value = '';
+            return;
+        }
 
         setLoading(true);
+        setMessage({ type: 'info', text: 'Uploading and processing backup... please wait.' });
+        
         try {
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const backupData = JSON.parse(event.target.result);
-                const response = await api.post('/admin/db/restore', backupData);
-                setMessage({ type: 'success', text: response.data.message });
-            };
-            reader.readAsText(file);
+            const formData = new FormData();
+            formData.append('backup', file);
+
+            const response = await api.post('/admin/db/restore', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+                timeout: 120000 // 2 minute timeout for large restores
+            });
+            
+            setMessage({ type: 'success', text: response.data.message });
         } catch (err) {
-            setMessage({ type: 'error', text: 'Restore failed: ' + err.message });
+            console.error('Restore Error:', err);
+            setMessage({ type: 'error', text: 'Restore failed: ' + (err.response?.data?.error || err.message) });
         } finally {
             setLoading(false);
+            e.target.value = '';
         }
     };
 
@@ -106,7 +124,7 @@ export function SystemView({ api }) {
                                 <label className="pill-btn">
                                     <Upload size={18} />
                                     {loading ? 'Processing...' : 'Select Backup File'}
-                                    <input type="file" accept=".json" onChange={handleRestore} hidden disabled={loading} />
+                                    <input type="file" accept=".json,.gz" onChange={handleRestore} hidden disabled={loading} />
                                 </label>
                             </div>
                         </div>
