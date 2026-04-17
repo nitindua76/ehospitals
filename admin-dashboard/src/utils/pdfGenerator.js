@@ -27,13 +27,20 @@ const DOC_LABELS = {
 
 export const generateHospitalPDF = async (form, refId, attachments = {}, token, API_URL, onProgress) => {
   const attachmentRows = Object.entries(attachments || {})
-    .filter(([key, file]) => file && (file.id || file._id))
-    .map(([key, file]) => [DOC_LABELS[key] || key, 'Attached']);
+    .filter(([key, val]) => val && (typeof val === 'string' || val.id || val._id))
+    .map(([key, val]) => [DOC_LABELS[key] || key, 'Attached']);
 
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // Header - Shifted down for Letterhead
+  // Header - Administration Marking
+  doc.setFontSize(10);
+  doc.setTextColor(150);
+  doc.setFont('helvetica', 'bold');
+  doc.text('OFFICIAL RECORD: GENERATED VIA ADMIN PORTAL', pageWidth - 20, 20, { align: 'right' });
+
+  // Header - Main Title
   doc.setFontSize(22);
   doc.setTextColor(44, 62, 80);
   doc.text('HOSPITAL EMPANELMENT APPLICATION', pageWidth / 2, 70, { align: 'center' });
@@ -338,10 +345,10 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
 
     const validAttachments = [];
     for (const key of attachmentKeys) {
-      const file = attachments[key];
-      const fileId = file?.id || file?._id;
+      const val = attachments[key];
+      const fileId = typeof val === 'string' ? val : (val?.id || val?._id);
       if (fileId) {
-        validAttachments.push([key, file]);
+        validAttachments.push([key, fileId, val]);
       }
     }
 
@@ -354,8 +361,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     if (onProgress) onProgress(5); // Started
 
     for (let i = 0; i < totalSteps; i++) {
-      const [key, file] = validAttachments[i];
-      const fileId = file?.id || file?._id;
+      const [key, fileId, originalVal] = validAttachments[i];
       if (onProgress) {
         const percent = 5 + Math.round(((i) / totalSteps) * 90);
         onProgress(percent);
@@ -368,7 +374,7 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
 
         const attachmentBytes = response.data;
         let contentType = response.headers['content-type'];
-        const fileName = (file.name || file.filename || '');
+        const fileName = (typeof originalVal === 'object' ? (originalVal?.name || originalVal?.filename) : '') || '';
 
         // Case 1: Detect by server header or filename
         if (contentType === 'application/octet-stream' || !contentType) {

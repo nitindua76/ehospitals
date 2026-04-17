@@ -5,16 +5,21 @@ const ScoringConfig = require('../models/ScoringConfig');
 const auth = require('../middleware/auth');
 const { computeCategoryScores } = require('../utils/computeScores');
 
-const ESSENTIAL_FACTOR_MAP = {
-    'fire_safety': 'statutory_clearances.fire_safety',
-    'central_ac': 'general_facilities.central_ac',
-    'nabh': 'accreditations.nabh',
-    'emergency': 'facilities.emergency',
-    'power_backup': 'general_facilities.power_backup'
-};
+const CRITERIA_REGISTRY = require('../utils/criteriaRegistry');
 
 function getDeepValue(obj, path) {
     return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+}
+
+function checkCriteria(h, key) {
+    const config = CRITERIA_REGISTRY[key];
+    if (!config) return true; // Default to passing if criteria unknown
+    const value = getDeepValue(h, config.path);
+    if (config.isEnum) {
+        if (Array.isArray(config.expectedValue)) return config.expectedValue.includes(value);
+        return value === config.expectedValue;
+    }
+    return !!value;
 }
 
 function computeOverallScore(categoryScores, weights) {
@@ -65,16 +70,23 @@ router.get('/rank', auth, async (req, res) => {
         if (!config) config = await ScoringConfig.create({ name: 'default' });
         const weights = config.weights.toObject ? config.weights.toObject() : config.weights;
 
-        const hospitals = await Hospital.find().lean();
+        // Fetch full Mongoose documents to ensure virtuals are computed
+        const hospitals = await Hospital.find();
         const essentialFactors = config.essentialFactors || [];
 
         const ranked = hospitals
-            .map(h => {
+            .map(hospital => {
+                const h = hospital.toJSON();
                 const cs = computeCategoryScores(h);
                 let overallScore = computeOverallScore(cs, weights);
 
                 // Essential factor check
-                const missingFactors = essentialFactors.filter(f => !getDeepValue(h, ESSENTIAL_FACTOR_MAP[f]));
+                const missingFactors = essentialFactors.map(f => {
+                    const pass = checkCriteria(h, f);
+                    if (!pass) return { key: f, ...CRITERIA_REGISTRY[f] };
+                    return null;
+                }).filter(Boolean);
+                
                 const ineligible = missingFactors.length > 0;
 
                 if (ineligible) {
@@ -105,7 +117,12 @@ router.post('/rank', auth, async (req, res) => {
                 let overallScore = computeOverallScore(cs, weights);
 
                 // Essential factor check
-                const missingFactors = essentialFactors.filter(f => !getDeepValue(h, ESSENTIAL_FACTOR_MAP[f]));
+                const missingFactors = essentialFactors.map(f => {
+                    const pass = checkCriteria(h, f);
+                    if (!pass) return { key: f, ...CRITERIA_REGISTRY[f] };
+                    return null;
+                }).filter(Boolean);
+                
                 const ineligible = missingFactors.length > 0;
 
                 if (ineligible) {
@@ -121,6 +138,11 @@ router.post('/rank', auth, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// GET /api/scoring/criteria - Full list of possible mandatory criteria
+router.get('/criteria', auth, (req, res) => {
+    res.json(CRITERIA_REGISTRY);
 });
 
 // GET /api/scoring/factors
@@ -146,15 +168,23 @@ router.get('/stats', auth, async (req, res) => {
         if (!config) config = await ScoringConfig.create({ name: 'default' });
         const weights = config.weights.toObject ? config.weights.toObject() : config.weights;
 
-        const ranked = hospitals.map(h => ({
-            ...h,
-            overallScore: computeOverallScore(computeCategoryScores(h), weights),
-        }));
+        const essentialFactors = config.essentialFactors || [];
+        const ranked = hospitals.map(h => {
+            const cs = computeCategoryScores(h);
+            const missingFactors = essentialFactors.filter(f => !checkCriteria(h, f));
+            return {
+                ...h,
+                overallScore: computeOverallScore(cs, weights),
+                missingFactors
+            };
+        });
 
         const total = ranked.length;
         const avgScore = total ? Math.round(ranked.reduce((s, h) => s + h.overallScore, 0) / total) : 0;
         const topHospital = ranked.sort((a, b) => b.overallScore - a.overallScore)[0];
         const selectedCount = hospitals.filter(h => h.selected).length;
+        const essentialCount = config.essentialFactors?.length || 0;
+        const compliantCount = ranked.filter(h => (h.missingFactors || []).length === 0 && h.has_submitted).length;
 
         // New Metrics
         const totalBeds = hospitals.reduce((sum, h) => sum + (h.total_beds || 0), 0);

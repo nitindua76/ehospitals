@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Eye, MousePointer2, Scale, Download, RefreshCcw, X, CheckCircle, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Eye, MousePointer2, Scale, Download, RefreshCcw, Trash2, X, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 
 export function RankingView({
     hospitals, allHospitals, search, setSearch, typeFilter, setTypeFilter,
     currentPage, setCurrentPage, totalPages, onToggleSelect, onViewHospital, essentialFactors = [],
-    compareList = [], onToggleCompare, onDownload, onRevert
+    compareList = [], onToggleCompare, onDownload, onRevert, onDelete
 }) {
     const [showFilters, setShowFilters] = useState(false);
     const [activeFilters, setActiveFilters] = useState([]);
@@ -81,8 +81,8 @@ export function RankingView({
             animate={{ opacity: 1 }}
         >
             <div className="table-controls-pro">
-                <div className="search-filter-premium">
-                    <Search size={18} className="search-icon" />
+                <div className="search-wrap-pro">
+                    <Search size={18} className="search-icon-dim" />
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search Agency Identity..." />
                 </div>
                 
@@ -91,7 +91,7 @@ export function RankingView({
                         <Filter size={16} />
                         <span>Advanced Filters</span>
                     </button>
-                    <button className="pill-btn" onClick={resetFilters}>
+                    <button title="Reset all filters" className="pill-btn" onClick={resetFilters}>
                         <RefreshCcw size={16} />
                     </button>
                 </div>
@@ -211,45 +211,49 @@ export function RankingView({
                             const anyEssentials = essentialFactors.length > 0;
                             const rank = (currentPage - 1) * 12 + i + 1;
 
-                            const COMPLIANCE_MAP = [
-                                { key: 'nabh', label: 'NABH', has: h.accreditations?.nabh },
-                                { key: 'fire_safety', label: 'FIRE', has: h.statutory_clearances?.fire_safety || h.fire_safety_attached },
-                                { key: 'emergency', label: 'EMG', has: h.facilities?.emergency },
-                                { key: 'power_backup', label: 'PWR', has: h.general_facilities?.power_backup }
-                            ];
-
-                            const visibleChips = COMPLIANCE_MAP.filter(item => {
-                                const isEssential = essentialFactors.includes(item.key);
-                                if (!anyEssentials) return true;
-                                return isEssential && !item.has;
-                            });
+                            const visibleChips = h.missingFactors || [];
 
                             return (
                                 <tr key={h._id} className={h.selected ? 'row-selected' : ''}>
-                                    <td className={`td-rank rank-${rank <= 3 ? rank : 'normal'}`}>
+                                    <td className={`td-rank ${rank <= 3 ? `rank-${rank}` : 'rank-default'}`}>
                                         <span className="rank-num">#{rank}</span>
                                     </td>
                                     <td className="td-name">
                                         <div className="name-stack">
                                             <div className="h-n-row">
                                                 <span className="h-n">{h.name || 'Unnamed Facility'}</span>
-                                                <span className="h-ref">#{h.refId || h._id.slice(-8).toUpperCase()}</span>
+                                                {h.has_submitted ? (
+                                                    <span className="h-status submitted">Submitted</span>
+                                                ) : (
+                                                    <span className="h-status draft">Draft (Step {h.current_step || 1}/14)</span>
+                                                )}
                                             </div>
-                                            {h.brand_name && <span className="h-b">Brand: {h.brand_name}</span>}
-                                            <span className="h-l">{h.city || 'Location N/A'}{h.state ? `, ${h.state}` : ''}</span>
+                                            <div className="h-meta-row">
+                                                <span className="h-ref">#{h.refId || h._id.slice(-8).toUpperCase()}</span>
+                                                {h.brand_name && h.brand_name !== h.name && (
+                                                    <span className="h-b">• Brand: {h.brand_name}</span>
+                                                )}
+                                            </div>
+                                            <div className="h-l-row">
+                                                <MapPin size={10} />
+                                                <span>{h.city || 'Location N/A'}{h.state ? `, ${h.state}` : ''}</span>
+                                            </div>
                                         </div>
                                     </td>
                                     <td><span className={`badge ${(h.ownership_type || 'Private').toLowerCase()}`}>{h.ownership_type || 'Private'}</span></td>
                                     <td>
                                         <div className="capacity-stack">
                                             <span className="bed-count">{h.total_beds || 0} Beds</span>
-                                            {h.cghs_rates_acceptable === 'Yes' && <span className="cghs-tag">CGHS ✓</span>}
+                                            {h.cghs_rates_acceptable === 'Yes' && <span className="cghs-tag" style={{ marginLeft: '4px' }}>CGHS ✓</span>}
                                         </div>
                                     </td>
                                     <td>
-                                        <div className="score-pill">
-                                            <div className="score-track"><div className="score-thumb" style={{ width: `${Math.min(100, Math.max(0, h.overallScore || 0))}%` }} /></div>
-                                            <span>{(h.overallScore || 0).toFixed(1)}</span>
+                                        <div className="score-pill-stack">
+                                            <div className={`score-pill ${(h.overallScore === 0 && h.has_submitted) ? 'danger' : ''}`}>
+                                                <div className="score-track"><div className="score-thumb" style={{ width: `${Math.min(100, Math.max(0, h.overallScore || 0))}%` }} /></div>
+                                                <span>{(h.overallScore || 0).toFixed(1)}</span>
+                                            </div>
+                                            {(h.overallScore === 0 && h.has_submitted) && <span className="ineligible-tag">Ineligible</span>}
                                         </div>
                                     </td>
                                     <td>
@@ -258,8 +262,8 @@ export function RankingView({
                                                 <span className="compliance-ok"><CheckCircle size={14} /> Verified</span>
                                             ) : (
                                                 visibleChips.map(chip => (
-                                                    <span key={chip.key} className={`chip ${chip.key.replace('_safety', '')} miss`}>
-                                                        {chip.label}
+                                                    <span key={chip.key} className="chip miss">
+                                                        {chip.icon} {chip.label.split(' ')[0]}
                                                     </span>
                                                 ))
                                             )}
@@ -282,6 +286,10 @@ export function RankingView({
                                             <button className="action-btn-pro danger" onClick={() => onRevert(h._id)}>
                                                 <RefreshCcw size={16} />
                                                 <span className="tooltip-pro">Revert to Draft</span>
+                                            </button>
+                                            <button className="action-btn-pro danger-glow" onClick={() => onDelete(h._id)}>
+                                                <Trash2 size={16} />
+                                                <span className="tooltip-pro">Permanent Delete</span>
                                             </button>
                                         </div>
                                     </td>

@@ -237,6 +237,14 @@ router.put('/me', hospitalAuth, async (req, res) => {
         });
 
         console.log('📦 updateData keys mapped:', Object.keys(updateData));
+        
+        // Calculate total_beds if capacity is updated
+        if (rawUpdateData.capacity) {
+            const c = rawUpdateData.capacity;
+            updateData['total_beds'] = (Number(c.general) || 0) + (Number(c.semi_private) || 0) + (Number(c.private) || 0) +
+                                      (Number(c.private_single_ac) || 0) + (Number(c.private_deluxe_ac) || 0) + (Number(c.private_suite) || 0) +
+                                      (Number(c.icu) || 0) + (Number(c.hdu) || 0);
+        }
 
         const hospital = await Hospital.findByIdAndUpdate(
             req.hospital.id,

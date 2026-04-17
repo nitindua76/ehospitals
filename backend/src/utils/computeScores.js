@@ -17,11 +17,21 @@ function computePatientOutcomes(h) {
     return total > 200 ? 95 : total > 100 ? 80 : total > 50 ? 65 : 50;
 }
 
+function getEffectiveBeds(h) {
+    if (h.total_beds) return h.total_beds;
+    if (!h.capacity) return 0;
+    const c = h.capacity;
+    return (c.general || 0) + (c.semi_private || 0) + (c.private || 0) +
+           (c.private_single_ac || 0) + (c.private_deluxe_ac || 0) + (c.private_suite || 0) +
+           (c.icu || 0) + (c.hdu || 0);
+}
+
 function computeInfrastructure(h) {
     const scores = [];
-    if (h.total_beds) scores.push(norm(h.total_beds, 50, 1000));
+    const beds = getEffectiveBeds(h);
+    if (beds) scores.push(norm(beds, 50, 1000));
     // Seed uses h.capacity.icu
-    if (h.capacity?.icu && h.total_beds) scores.push(norm((h.capacity.icu / h.total_beds) * 100, 0, 20));
+    if (h.capacity?.icu && beds) scores.push(norm((h.capacity.icu / beds) * 100, 0, 20));
 
     // Statutory clearances
     const cl = h.statutory_clearances || {};

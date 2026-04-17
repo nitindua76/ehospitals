@@ -19,14 +19,16 @@ const DOC_LABELS = {
   cea_registration: 'CEA Registration Certificate',
   bank_ecs: 'Bank/ECS Details (Signed)',
   tariff: 'Schedule of Charges (Tariff)',
+  room_tariffs: 'Room categories available with Tariffs and Facilities',
+  schedule_of_charges: 'General Public Schedule of Charges',
   mri_declaration: 'MRI Outsourced Declaration',
   pet_ct_declaration: 'PET-CT Outsourced Declaration'
 };
 
 export const generateHospitalPDF = async (form, refId, attachments = {}, token, API_URL, onProgress) => {
   const attachmentRows = Object.entries(attachments || {})
-    .filter(([key, file]) => file && file.id)
-    .map(([key, file]) => [DOC_LABELS[key] || key, 'Attached']);
+    .filter(([key, val]) => val && (typeof val === 'string' || val.id || val._id))
+    .map(([key, val]) => [DOC_LABELS[key] || key, 'Attached']);
 
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -339,11 +341,10 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
 
     const validAttachments = [];
     for (const key of attachmentKeys) {
-      const file = attachments[key];
-      const hasId = !!(file && file.id);
-      console.log(`   - Key: ${key}, hasId: ${hasId}, val:`, file);
-      if (hasId) {
-        validAttachments.push([key, file]);
+      const val = attachments[key];
+      const fileId = typeof val === 'string' ? val : (val?.id || val?._id);
+      if (fileId) {
+        validAttachments.push([key, fileId, val]);
       }
     }
 
@@ -358,20 +359,20 @@ export const generateHospitalPDF = async (form, refId, attachments = {}, token, 
     if (onProgress) onProgress(5); // Started
 
     for (let i = 0; i < totalSteps; i++) {
-      const [key, file] = validAttachments[i];
+      const [key, fileId, originalVal] = validAttachments[i];
       if (onProgress) {
         const percent = 5 + Math.round(((i) / totalSteps) * 90);
         onProgress(percent);
       }
       try {
-        const response = await axios.get(`${API_URL}/hospital-auth/files/${file.id}`, {
+        const response = await axios.get(`${API_URL}/hospital-auth/files/${fileId}`, {
           headers: { Authorization: `Bearer ${token}` },
           responseType: 'arraybuffer'
         });
 
         const attachmentBytes = response.data;
         let contentType = response.headers['content-type'];
-        const fileName = file.name || '';
+        const fileName = (typeof originalVal === 'object' ? (originalVal?.name || originalVal?.filename) : '') || '';
 
         // Case 1: Detect by server header or filename
         if (contentType === 'application/octet-stream' || !contentType) {

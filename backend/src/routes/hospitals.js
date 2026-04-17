@@ -150,8 +150,30 @@ router.patch('/:id/status', auth, async (req, res) => {
 // DELETE /api/hospitals/:id — Admin: delete hospital
 router.delete('/:id', auth, async (req, res) => {
     try {
+        const hospital = await Hospital.findById(req.params.id);
+        if (!hospital) return res.status(404).json({ error: 'Hospital not found' });
+
+        // Cleanup associated GridFS files
+        if (hospital.attachments) {
+            const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+                bucketName: 'uploads'
+            });
+
+            // Iterate through attachment keys and delete if valid ObjectId
+            for (const key in hospital.attachments) {
+                const fileId = hospital.attachments[key];
+                if (fileId && mongoose.Types.ObjectId.isValid(fileId)) {
+                    try {
+                        await bucket.delete(new mongoose.Types.ObjectId(fileId));
+                    } catch (err) {
+                        console.warn(`⚠️ GridFS Cleanup (FileID: ${fileId}): ${err.message}`);
+                    }
+                }
+            }
+        }
+
         await Hospital.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: 'Hospital deleted' });
+        res.json({ success: true, message: 'Hospital and all associated documents deleted successfully' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

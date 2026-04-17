@@ -1,9 +1,26 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Save, RefreshCcw, Info, Sliders, ShieldCheck, PieChart, Activity, DollarSign, Building2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Save, Info, ShieldCheck, Activity, DollarSign, Building2, Plus, X, Search } from 'lucide-react';
+import api from '../utils/api';
 
 export function WeightsView({ weights, essentialFactors, factors, onWeightChange, onEssentialChange, onSave, onPreset }) {
-    // Categorize factors for cleaner UI
+    const [allCriteria, setAllCriteria] = useState({});
+    const [showSelector, setShowSelector] = useState(false);
+    const [search, setSearch] = useState('');
+
+    useEffect(() => {
+        const fetchCriteria = async () => {
+            try {
+                const res = await api.get('/scoring/criteria');
+                setAllCriteria(res.data);
+            } catch (e) {
+                console.error('Failed to load criteria registry');
+            }
+        };
+        fetchCriteria();
+    }, []);
+
+    // Categorize weights for cleaner UI
     const GROUPS = {
         'Strategic & Quality': ['patient_outcomes', 'staff_quality', 'patient_satisfaction', 'accreditation'],
         'Capacity & Tech': ['infrastructure', 'technology'],
@@ -15,6 +32,11 @@ export function WeightsView({ weights, essentialFactors, factors, onWeightChange
         if (group.includes('Capacity')) return <Building2 size={18} />;
         return <DollarSign size={18} />;
     };
+
+    const availableToAdd = Object.keys(allCriteria).filter(key => 
+        !essentialFactors.includes(key) && 
+        allCriteria[key].label.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
         <motion.div
@@ -72,30 +94,72 @@ export function WeightsView({ weights, essentialFactors, factors, onWeightChange
                         <div className="config-card-head">
                             <div className="head-text">
                                 <h3>Hard Gatekeepers</h3>
-                                <p>Mandatory criteria. Failing any will disqualifies the agency.</p>
+                                <p>Agencies failing any marked criteria will be disqualified (-100 pts).</p>
                             </div>
+                            <button className="add-crit-btn" onClick={() => setShowSelector(!showSelector)}>
+                                <Plus size={16} />
+                            </button>
                         </div>
-                        <div className="essential-list-pro">
-                            {[
-                                { key: 'fire_safety', label: 'Fire Safety NOC', icon: '🔥' },
-                                { key: 'nabh', label: 'NABH Accreditation', icon: '📜' },
-                                { key: 'emergency', label: '24x7 Emergency Services', icon: '🏥' },
-                                { key: 'power_backup', label: 'Dual Power Backup', icon: '⚡' },
-                            ].map(ef => (
-                                <button
-                                    key={ef.key}
-                                    className={`ef-toggle-pill ${essentialFactors.includes(ef.key) ? 'active' : ''}`}
-                                    onClick={() => onEssentialChange(ef.key)}
+
+                        <AnimatePresence>
+                            {showSelector && (
+                                <motion.div 
+                                    className="criteria-selector-popover"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
                                 >
-                                    <span className="ef-icon">{ef.icon}</span>
-                                    <span className="ef-label">{ef.label}</span>
-                                    {essentialFactors.includes(ef.key) && <ShieldCheck size={14} className="chk" />}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="ef-notice">
-                            <Info size={14} />
-                            <p>Agencies missing these will be penalized -100 points and flagged in reports.</p>
+                                    <div className="search-bar-mini">
+                                        <Search size={14} />
+                                        <input 
+                                            placeholder="Search criteria..." 
+                                            value={search}
+                                            onChange={e => setSearch(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="available-list">
+                                        {availableToAdd.map(key => (
+                                            <div 
+                                                key={key} 
+                                                className="available-item"
+                                                onClick={() => {
+                                                    onEssentialChange(key);
+                                                    setSearch('');
+                                                    setShowSelector(false);
+                                                }}
+                                            >
+                                                <span className="ef-icon">{allCriteria[key].icon}</span>
+                                                <div className="ef-text">
+                                                    <span className="ef-label">{allCriteria[key].label}</span>
+                                                    <span className="ef-cat">{allCriteria[key].category}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {availableToAdd.length === 0 && <p className="no-res">No matching criteria</p>}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        <div className="essential-list-pro">
+                            {essentialFactors.map(key => {
+                                const ef = allCriteria[key];
+                                return (
+                                    <div key={key} className="ef-toggle-pill active">
+                                        <span className="ef-icon">{ef?.icon || '🔹'}</span>
+                                        <span className="ef-label">{ef?.label || key}</span>
+                                        <button className="ef-remove" onClick={() => onEssentialChange(key)}>
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                            {essentialFactors.length === 0 && (
+                                <div className="empty-essentials">
+                                    <Info size={20} />
+                                    <p>No mandatory criteria defined. All hospitals are eligible for top ranking.</p>
+                                </div>
+                            )}
                         </div>
                     </section>
 

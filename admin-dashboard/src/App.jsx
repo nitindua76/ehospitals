@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, Component } from 'react'
-import axios from 'axios'
 import './App.css'
 
 // Admin Components
@@ -13,6 +12,7 @@ import { SystemView } from './components/SystemView'
 import { HospitalDrawer } from './components/HospitalDrawer'
 import { LoginPage } from './components/LoginPage'
 import { generateHospitalPDF } from './utils/pdfGenerator'
+import api from './utils/api'
 
 // Error Boundary for UI Safety
 class ErrorBoundary extends Component {
@@ -64,13 +64,6 @@ const PRESETS = {
     clinical: { patient_outcomes: 40, infrastructure: 10, staff_quality: 25, financial_health: 5, technology: 5, patient_satisfaction: 10, accreditation: 5 },
 }
 
-const api = axios.create({ baseURL: API })
-api.interceptors.request.use(cfg => {
-    const token = sessionStorage.getItem('token')
-    if (token) cfg.headers.Authorization = `Bearer ${token}`
-    return cfg
-})
-
 const downloadFile = async (url, filename) => {
     try {
         const res = await api.get(url, { responseType: 'blob' })
@@ -99,6 +92,7 @@ function AdminApp() {
     const [search, setSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState('')
     const [currentPage, setCurrentPage] = useState(1)
+    const [categoryFilter, setCategoryFilter] = useState('')
     const [toasts, setToasts] = useState([])
 
     const showToast = (msg, type = 'success') => {
@@ -188,6 +182,31 @@ function AdminApp() {
         }
     }
 
+    const deleteHospital = async (id) => {
+        const target = hospitals.find(h => h._id === id);
+        if (!target) return;
+
+        // Double Confirmation Security Flow
+        const confirm1 = window.confirm(`CRITICAL ACTION: Are you sure you want to PERMANENTLY delete "${target.name || 'this hospital'}"? \n\nThis will also remove all associated server files (PAN, GST, NABH, etc.). This action cannot be undone.`);
+        if (!confirm1) return;
+
+        const confirm2 = window.prompt(`Final Safety Check: Please type "DELETE" (all caps) to confirm:`);
+        if (confirm2 !== 'DELETE') {
+            if (confirm2 !== null) showToast('Deletion aborted: Invalid confirmation key', 'error');
+            return;
+        }
+
+        try {
+            showToast(`Purging hospital record: ${target.name}...`, 'info');
+            await api.delete(`/hospitals/${id}`);
+            showToast('Hospital record and all documents purged', 'success');
+            fetchData(); // Refresh list to reflect changes
+        } catch (e) {
+            console.error('Purge Failed:', e);
+            showToast(e.response?.data?.error || 'Purge operation failed', 'error');
+        }
+    }
+
     const downloadApplication = async (h) => {
         showToast(`Preparing application package for ${h.name}...`, 'info');
         try {
@@ -240,7 +259,16 @@ function AdminApp() {
                 <div className="content-area-pro">
                     {loading && <div className="loading-line-pro" />}
 
-                    {view === 'dashboard' && <DashboardView stats={stats} hospitals={hospitals} TYPE_COLORS={TYPE_COLORS} setView={setView} />}
+                    {view === 'dashboard' && (
+                        <DashboardView 
+                            stats={stats} 
+                            hospitals={hospitals} 
+                            TYPE_COLORS={TYPE_COLORS} 
+                            setView={setView} 
+                            categoryFilter={categoryFilter}
+                            setCategoryFilter={setCategoryFilter}
+                        />
+                    )}
                     {view === 'ranking' && (
                         <RankingView
                             hospitals={paginated}
@@ -259,6 +287,7 @@ function AdminApp() {
                             }}
                             onDownload={downloadApplication}
                             onRevert={revertSubmission}
+                            onDelete={deleteHospital}
                         />
                     )}
                     {view === 'analytics' && <AnalyticsView hospitals={hospitals} />}
