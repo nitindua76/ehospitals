@@ -89,11 +89,6 @@ export function Step13({ form, attachedFiles, setAttachedFiles }) {
                             <span className="doc-label">
                                 {doc.label} {doc.required && <span className="required">*</span>}
                             </span>
-                            {doc.download && (
-                                <a href={doc.download} download className="doc-template-link" onClick={e => { e.stopPropagation(); }}>
-                                    <FileCheck size={12} /> Download Template
-                                </a>
-                            )}
                             {attachedFiles[doc.key] && (
                                 <span className="doc-status">
                                     <FileCheck size={12} /> {attachedFiles[doc.key].name}
